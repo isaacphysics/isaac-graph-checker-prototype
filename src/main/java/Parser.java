@@ -1,0 +1,112 @@
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import java.util.HashMap;
+
+public class Parser {
+
+    public static HashMap<String, Object> parseInputJSONString(String JSONString) throws CheckerException, ParseException {
+        JSONParser parser = new JSONParser();
+
+        try {
+            HashMap<String, Object> data = new HashMap<String, Object>();
+
+            Object obj = parser.parse(JSONString);
+            JSONObject jsonData = (JSONObject) obj;
+
+            JSONArray jsonSymbols = (JSONArray) jsonData.get("symbols");
+            Symbol[] symbols = new Symbol[jsonSymbols.size()];
+            for (int i = 0; i < jsonSymbols.size(); i++) {
+                JSONObject jsonSymbol = (JSONObject) jsonSymbols.get(i);
+                Double x = ((Number) jsonSymbol.get("x")).doubleValue();
+                Double y = ((Number) jsonSymbol.get("y")).doubleValue();
+                String text = (String) jsonSymbol.get("text");
+
+                int bindCurveIdx = -1;
+                String category = "";
+                int catIndex = -1;
+                if (jsonSymbol.get("bindCurveIdx") != null) {
+                    bindCurveIdx = ((Long) jsonSymbol.get("bindCurveIdx")).intValue();
+                    category = (String) jsonSymbol.get("category");
+                    catIndex = ((Long) jsonSymbol.get("catIndex")).intValue();
+                }
+
+                symbols[i] = new Symbol(x, y, text, bindCurveIdx, category, catIndex);
+            }
+            data.put("symbols", symbols);
+
+
+            JSONArray jsonPtss = (JSONArray) jsonData.get("ptss");
+            Point[][] ptss = new Point[jsonPtss.size()][];
+            for (int i = 0; i < jsonPtss.size(); i++) {
+                JSONArray jsonPts = (JSONArray) jsonPtss.get(i);
+                ptss[i] = new Point[jsonPts.size()];
+                for (int j = 0; j < jsonPts.size(); j++) {
+                    JSONObject jsonPoint = (JSONObject) jsonPts.get(j);
+                    Double x = ((Number) jsonPoint.get("x")).doubleValue();
+                    Double y = ((Number) jsonPoint.get("y")).doubleValue();
+                    ptss[i][j] = new Point(x, y);
+                }
+            }
+            data.put("ptss", ptss);
+
+            double canvasWidth = ((Number) jsonData.get("canvasWidth")).doubleValue();
+            if (canvasWidth < 0 || canvasWidth > 5000)
+                throw new CheckerException("Invalid canvasWidth");
+            data.put("canvasWidth", canvasWidth);
+
+            double canvasHeight = ((Number) jsonData.get("canvasHeight")).doubleValue();
+            if (canvasHeight < 0 || canvasHeight > 5000)
+                throw new CheckerException("Invalid canvasHeight");
+            data.put("canvasHeight", canvasHeight);
+
+            String descriptor = "";
+            if (jsonData.get("descriptor") != null) {
+                descriptor = (String) (jsonData.get("descriptor"));
+            }
+            data.put("descriptor", descriptor);
+
+            return data;
+
+        } catch (NullPointerException npExn) {
+            throw new CheckerException("Invalid JSON: key information missing");
+        }
+    }
+
+    public static HashMap<String, Object> parseResultJSONString(String JSONString) throws ParseException {
+
+        JSONParser parser = new JSONParser();
+        HashMap<String, Object> result = new HashMap<String, Object>();
+
+        Object obj = parser.parse(JSONString);
+        JSONObject jsonResult = (JSONObject) obj;
+
+        result.put("descriptor", jsonResult.get("descriptor"));
+        result.put("isCorrect", jsonResult.get("isCorrect"));
+        result.put("test_symbols", jsonResult.get("test_symbols"));
+        result.put("test_number of segments", jsonResult.get("test_number of segments"));
+
+        JSONArray jsonSegmentsResults = (JSONArray) jsonResult.get("segmentsResults");
+        Object[] segmentsResults = new Object[jsonSegmentsResults.size()];
+        for (int i = 0; i < jsonSegmentsResults.size(); i++) {
+            JSONObject jsonSegmentResult = (JSONObject) jsonSegmentsResults.get(i);
+            HashMap<String, Object> segmentResult = new HashMap<String, Object>();
+
+            segmentResult.put("test_position", jsonSegmentResult.get("test_position"));
+            segmentResult.put("test_shape", jsonSegmentResult.get("test_shape"));
+            segmentResult.put("test_maxima", jsonSegmentResult.get("test_maxima"));
+            segmentResult.put("test_minima", jsonSegmentResult.get("test_minima"));
+            segmentResult.put("errPosition", jsonSegmentResult.get("errPosition"));
+            segmentResult.put("errShape", jsonSegmentResult.get("errShape"));
+
+            segmentsResults[i] = jsonSegmentResult;
+        }
+
+        result.put("segmentsResults", segmentsResults);
+
+        return result;
+    }
+
+
+}
