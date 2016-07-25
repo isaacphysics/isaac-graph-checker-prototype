@@ -12,7 +12,7 @@ public class Parser {
     public static HashMap<String, Object> parseInputJSONString(String JSONString) throws CheckerException, ParseException {
         JSONParser parser = new JSONParser();
 
-        try {
+//        try {
             Object obj = parser.parse(JSONString);
             JSONObject jsonData = (JSONObject) obj;
 
@@ -134,14 +134,16 @@ public class Parser {
                     minima[j] = knot;
                 }
                 curve.setMinima(minima);
+
+                curves[i] = curve;
             }
             data.put("curves", curves);
 
             return data;
 
-        } catch (NullPointerException npExn) {
-            throw new CheckerException("Invalid JSON: key information missing");
-        }
+//        } catch (NullPointerException npExn) {
+//            throw new CheckerException("Invalid JSON: key information missing");
+//        }
     }
 
     public static HashMap<String, Object> parseResultJSONString(String JSONString) throws ParseException {
@@ -178,7 +180,7 @@ public class Parser {
         return result;
     }
 
-    public boolean getIsCorrect(String JSONString) throws ParseException {
+    public static boolean getIsCorrect(String JSONString) throws ParseException {
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(JSONString);
         JSONObject jsonResult = (JSONObject) obj;

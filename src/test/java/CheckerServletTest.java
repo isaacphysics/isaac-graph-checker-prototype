@@ -29,9 +29,8 @@ public class CheckerServletTest {
         ts.doPost(mshReq, mhsResp);
 
         String resultJSONString = mhsResp.getContentAsString();
-        HashMap<String, Object> data = Parser.parseResultJSONString(resultJSONString);
-        boolean isCorrect = (Boolean) data.get("isCorrect");
-        assertTrue(isCorrect);
+        boolean isCorrect = Parser.getIsCorrect(resultJSONString);
+        assertFalse(isCorrect);
     }
 
 }

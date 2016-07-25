@@ -71,8 +71,7 @@ public class Checker {
 
     private static boolean testKnots(Knot[] knots1, Knot[] knots2) {
 
-        if (knots1.length != knots2.length)
-            return false;
+        if (knots1.length != knots2.length) return false;
 
         int n = knots1.length;
         for (int i = 0; i < n; i++) {
@@ -82,7 +81,7 @@ public class Checker {
             if (knots1[i].symbol != null && knots2[i].symbol == null) return false;
             else if (knots1[i].symbol == null && knots2[i].symbol != null) return false;
             else if (knots1[i].symbol != null && knots2[i].symbol != null) {
-                if (knots1[i].symbol.text != knots2[i].symbol.text) return false;
+                if (!knots1[i].symbol.text.equals(knots2[i].symbol.text)) return false;
             }
         }
 
@@ -94,10 +93,10 @@ public class Checker {
 	public static String test(String trustedJSONString, String untrustedJSONString) throws CheckerException, ParseException {
 
         HashMap<String, Object> trustedData = Parser.parseInputJSONString(trustedJSONString);
-        Curve[] trustedCurves = (Curve[]) trustedData.get("Curves");
+        Curve[] trustedCurves = (Curve[]) trustedData.get("curves");
 
         HashMap<String, Object> untrustedData = Parser.parseInputJSONString(untrustedJSONString);
-        Curve[] untrustedCurves = (Curve[]) untrustedData.get("Curves");
+        Curve[] untrustedCurves = (Curve[]) untrustedData.get("curves");
 
 	    boolean isCorrect = true;
         JSONObject jsonResult = new JSONObject();
@@ -188,6 +187,7 @@ public class Checker {
         }
 
         jsonResult.put("isCorrect", isCorrect);
+        System.out.println(isCorrect);
         return jsonResult.toJSONString();
 	}
 
@@ -196,8 +196,7 @@ public class Checker {
 
 	    String trustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
         String untrustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
-        System.out.println(test(trustedJSONString, untrustedJSONString));
-
+        test(trustedJSONString, untrustedJSONString);
     }
 	
 }

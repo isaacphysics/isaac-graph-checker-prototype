@@ -10,7 +10,7 @@ public class CheckerTest {
         String trustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
         String untrustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
         String resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);
-        boolean isCorrect = (Boolean) (Parser.parseResultJSONString(resultJSONString)).get("isCorrect");
+        boolean isCorrect = Parser.getIsCorrect(resultJSONString);
         assertFalse(isCorrect);
     }
 
