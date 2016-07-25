@@ -7,9 +7,9 @@ public class CheckerTest {
 
     @Test
     public void testCase1() throws IOException, CheckerException, ParseException {
-        String testJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
-        String drawnJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
-        String resultJSONString = Checker.test(testJSONString, drawnJSONString);
+        String trustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
+        String untrustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
+        String resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);
         boolean isCorrect = (Boolean) (Parser.parseResultJSONString(resultJSONString)).get("isCorrect");
         assertFalse(isCorrect);
     }

@@ -17,12 +17,12 @@ public class CheckerServlet extends HttpServlet {
         System.out.println("-----------------------");
         System.out.println("Request handler 'test' is called.");
 
-        String drawnJSONString = request.getParameter("data");
+        String untrustedJSONString = request.getParameter("data");
 
         String resultJSONString = "";
         try {
-            String testJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
-            resultJSONString = Checker.test(testJSONString, drawnJSONString);
+            String trustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
+            resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);
         } catch (CheckerException e) {
             e.printStackTrace();
         } catch (ParseException e) {

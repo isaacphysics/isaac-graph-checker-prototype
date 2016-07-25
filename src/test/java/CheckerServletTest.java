@@ -14,10 +14,10 @@ public class CheckerServletTest {
     @Test
     public void testCase1() throws IOException, CheckerException, ServletException, ParseException {
 
-        String drawnJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
+        String untrustedJSONstring = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
 
         MockHttpServletRequest mshReq = new MockHttpServletRequest();
-        mshReq.addParameter("data", drawnJSONString);
+        mshReq.addParameter("data", untrustedJSONstring);
         mshReq.setMethod("POST");
         mshReq.setServerPort(5000);
         mshReq.setServerName("localhost");

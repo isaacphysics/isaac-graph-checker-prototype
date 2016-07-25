@@ -2,54 +2,21 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Parser {
+
 
     public static HashMap<String, Object> parseInputJSONString(String JSONString) throws CheckerException, ParseException {
         JSONParser parser = new JSONParser();
 
         try {
-            HashMap<String, Object> data = new HashMap<String, Object>();
-
             Object obj = parser.parse(JSONString);
             JSONObject jsonData = (JSONObject) obj;
 
-            JSONArray jsonSymbols = (JSONArray) jsonData.get("symbols");
-            Symbol[] symbols = new Symbol[jsonSymbols.size()];
-            for (int i = 0; i < jsonSymbols.size(); i++) {
-                JSONObject jsonSymbol = (JSONObject) jsonSymbols.get(i);
-                Double x = ((Number) jsonSymbol.get("x")).doubleValue();
-                Double y = ((Number) jsonSymbol.get("y")).doubleValue();
-                String text = (String) jsonSymbol.get("text");
-
-                int bindCurveIdx = -1;
-                String category = "";
-                int catIndex = -1;
-                if (jsonSymbol.get("bindCurveIdx") != null) {
-                    bindCurveIdx = ((Long) jsonSymbol.get("bindCurveIdx")).intValue();
-                    category = (String) jsonSymbol.get("category");
-                    catIndex = ((Long) jsonSymbol.get("catIndex")).intValue();
-                }
-
-                symbols[i] = new Symbol(x, y, text, bindCurveIdx, category, catIndex);
-            }
-            data.put("symbols", symbols);
-
-
-            JSONArray jsonPtss = (JSONArray) jsonData.get("ptss");
-            Point[][] ptss = new Point[jsonPtss.size()][];
-            for (int i = 0; i < jsonPtss.size(); i++) {
-                JSONArray jsonPts = (JSONArray) jsonPtss.get(i);
-                ptss[i] = new Point[jsonPts.size()];
-                for (int j = 0; j < jsonPts.size(); j++) {
-                    JSONObject jsonPoint = (JSONObject) jsonPts.get(j);
-                    Double x = ((Number) jsonPoint.get("x")).doubleValue();
-                    Double y = ((Number) jsonPoint.get("y")).doubleValue();
-                    ptss[i][j] = new Point(x, y);
-                }
-            }
-            data.put("ptss", ptss);
+            HashMap<String, Object> data = new HashMap<String, Object>();
 
             double canvasWidth = ((Number) jsonData.get("canvasWidth")).doubleValue();
             if (canvasWidth < 0 || canvasWidth > 5000)
@@ -66,6 +33,109 @@ public class Parser {
                 descriptor = (String) (jsonData.get("descriptor"));
             }
             data.put("descriptor", descriptor);
+
+
+            JSONArray jsonCurves = (JSONArray) jsonData.get("curves");
+            Curve[] curves = new Curve[jsonCurves.size()];
+            for (int i = 0; i < jsonCurves.size(); i++) {
+                JSONObject jsonCurve = (JSONObject) jsonCurves.get(i);
+                Curve curve = new Curve();
+
+                JSONArray jsonPts = (JSONArray) jsonCurve.get("pts");
+                Point[] pts = new Point[jsonPts.size()];
+                for (int j = 0; j < jsonPts.size(); j++) {
+                    JSONObject jsonPoint = (JSONObject) jsonPts.get(j);
+                    Double x = ((Number) jsonPoint.get("x")).doubleValue();
+                    Double y = ((Number) jsonPoint.get("y")).doubleValue();
+                    pts[j] = new Point(x, y);
+                }
+                curve.setPts(pts);
+
+                JSONArray jsonInterX = (JSONArray) jsonCurve.get("interX");
+                Knot[] interX = new Knot[jsonInterX.size()];
+                for (int j = 0; j < jsonInterX.size(); j++) {
+                    JSONObject jsonKnot = (JSONObject) jsonInterX.get(j);
+                    Double x = ((Number) jsonKnot.get("x")).doubleValue();
+                    Double y = ((Number) jsonKnot.get("y")).doubleValue();
+
+                    Symbol symbol = null;
+                    if (jsonKnot.get("symbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("symbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        symbol = new Symbol(sx, sy, text);
+                    }
+
+                    Knot knot = new Knot(x,y,symbol);
+                    interX[j] = knot;
+                }
+                curve.setInterX(interX);
+
+                JSONArray jsonInterY = (JSONArray) jsonCurve.get("interY");
+                Knot[] interY = new Knot[jsonInterY.size()];
+                for (int j = 0; j < jsonInterY.size(); j++) {
+                    JSONObject jsonKnot = (JSONObject) jsonInterY.get(j);
+                    Double x = ((Number) jsonKnot.get("x")).doubleValue();
+                    Double y = ((Number) jsonKnot.get("y")).doubleValue();
+
+                    Symbol symbol = null;
+                    if (jsonKnot.get("symbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("symbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        symbol = new Symbol(sx, sy, text);
+                    }
+
+                    Knot knot = new Knot(x, y, symbol);
+                    interY[j] = knot;
+                }
+                curve.setInterY(interY);
+
+                JSONArray jsonMaxima = (JSONArray) jsonCurve.get("maxima");
+                Knot[] maxima = new Knot[jsonMaxima.size()];
+                for (int j = 0; j < jsonMaxima.size(); j++) {
+                    JSONObject jsonKnot = (JSONObject) jsonMaxima.get(j);
+                    Double x = ((Number) jsonKnot.get("x")).doubleValue();
+                    Double y = ((Number) jsonKnot.get("y")).doubleValue();
+
+                    Symbol symbol = null;
+                    if (jsonKnot.get("symbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("symbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        symbol = new Symbol(sx, sy, text);
+                    }
+
+                    Knot knot = new Knot(x, y, symbol);
+                    maxima[j] = knot;
+                }
+                curve.setMaxima(maxima);
+
+                JSONArray jsonMinima = (JSONArray) jsonCurve.get("minima");
+                Knot[] minima = new Knot[jsonMinima.size()];
+                for (int j = 0; j < jsonMinima.size(); j++) {
+                    JSONObject jsonKnot = (JSONObject) jsonMinima.get(j);
+                    Double x = ((Number) jsonKnot.get("x")).doubleValue();
+                    Double y = ((Number) jsonKnot.get("y")).doubleValue();
+
+                    Symbol symbol = null;
+                    if (jsonKnot.get("symbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("symbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        symbol = new Symbol(sx, sy, text);
+                    }
+
+                    Knot knot = new Knot(x, y, symbol);
+                    minima[j] = knot;
+                }
+                curve.setMinima(minima);
+            }
+            data.put("curves", curves);
 
             return data;
 
@@ -106,6 +176,14 @@ public class Parser {
         result.put("segmentsResults", segmentsResults);
 
         return result;
+    }
+
+    public boolean getIsCorrect(String JSONString) throws ParseException {
+        JSONParser parser = new JSONParser();
+        Object obj = parser.parse(JSONString);
+        JSONObject jsonResult = (JSONObject) obj;
+        boolean isCorrect = (Boolean) jsonResult.get("isCorrect");
+        return isCorrect;
     }
 
 
