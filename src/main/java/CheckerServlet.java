@@ -16,8 +16,6 @@
 
 import org.json.simple.parser.ParseException;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -37,7 +35,7 @@ public class CheckerServlet extends HttpServlet {
 
         String resultJSONString = "";
         try {
-            String trustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
+            String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
             resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);
         } catch (CheckerException e) {
             e.printStackTrace();

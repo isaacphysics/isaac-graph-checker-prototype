@@ -17,7 +17,6 @@
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedList;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -65,7 +64,7 @@ public class Checker {
 
     private static double findError(Point[] pts1, Point[] pts2) throws CheckerException {
         if (pts1.length != pts2.length)
-            throw new CheckerException("Test segment and drawn segment have different number of points");
+            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
 
         int n = pts1.length;
         double normDegree = 3;
@@ -85,26 +84,69 @@ public class Checker {
         return Math.min(err1, err2);
     }
 
+    public static boolean testPosition(Point[] trustedPts, Point[] untrustedPts) throws CheckerException {
+        double errTolerancePosition = 0.02;
+        double errPosition = findError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
+        if (errPosition < errTolerancePosition) {
+            return true;
+        } else {
+            return false;
+        }
 
-    private static boolean testKnots(Knot[] knots1, Knot[] knots2) {
+    }
 
-        if (knots1.length != knots2.length) return false;
+    public static boolean testShape(Point[] trustedPts, Point[] untrustedPts) throws CheckerException {
+        double errToleranceShape = 0.01;
+        double errShape = findError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
+        if (errShape < errToleranceShape) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-        int n = knots1.length;
-        for (int i = 0; i < n; i++) {
-            if (knots1[i].x * knots2[i].x < 0) return false;
-            if (knots1[i].y * knots2[i].y < 0) return false;
+    private static boolean testKnotsSymbols(Knot[] knots1, Knot[] knots2) {
+        for (int i = 0; i < knots1.length; i++) {
 
             if (knots1[i].symbol != null && knots2[i].symbol == null) return false;
-            else if (knots1[i].symbol == null && knots2[i].symbol != null) return false;
-            else if (knots1[i].symbol != null && knots2[i].symbol != null) {
-                if (!knots1[i].symbol.text.equals(knots2[i].symbol.text)) return false;
+            if (knots1[i].symbol == null && knots2[i].symbol != null) return false;
+            if (knots1[i].symbol != null && knots2[i].symbol != null) {
+                if (!knots1[i].symbol.text.equals(knots2[i].symbol.text)) {
+                    return false;
+                }
+            }
+
+            if (knots1[i].xSymbol != null && knots2[i].xSymbol == null) return false;
+            if (knots1[i].xSymbol == null && knots2[i].xSymbol != null) return false;
+            if (knots1[i].xSymbol != null && knots2[i].xSymbol != null) {
+                if (!knots1[i].xSymbol.text.equals(knots2[i].xSymbol.text)) {
+                    return false;
+                }
+            }
+
+            if (knots1[i].ySymbol != null && knots2[i].ySymbol == null) return false;
+            if (knots1[i].ySymbol == null && knots2[i].ySymbol != null) return false;
+            if (knots1[i].ySymbol != null && knots2[i].ySymbol != null) {
+                if (!knots1[i].ySymbol.text.equals(knots2[i].ySymbol.text)) {
+                    return false;
+                }
             }
         }
 
         return true;
     }
 
+    private static boolean testKnotsPosition(Knot[] knots1, Knot[] knots2) {
+        if (knots1.length != knots2.length) return false;
+
+        for (int i = 0; i < knots1.length; i++) {
+            if ((knots1[i].x * knots2[i].x < 0) || (knots1[i].y * knots2[i].y < 0)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
 
 	public static String test(String trustedJSONString, String untrustedJSONString) throws CheckerException, ParseException {
@@ -115,105 +157,74 @@ public class Checker {
         HashMap<String, Object> untrustedData = Parser.parseInputJSONString(untrustedJSONString);
         Curve[] untrustedCurves = (Curve[]) untrustedData.get("curves");
 
-	    boolean isCorrect = true;
         JSONObject jsonResult = new JSONObject();
 
-        String descriptor = (String) untrustedData.get("descriptor");
-        jsonResult.put("descriptor", descriptor);
-        System.out.println("Descriptor: " + descriptor);
-
 	    if (trustedCurves.length != untrustedCurves.length) {
-	        isCorrect = false;
-            System.out.println("Fail 'number of curves' test");
-            jsonResult.put("'number of curves' test", false);
-        } else {
-            System.out.println("Pass 'number of segments' test");
-            jsonResult.put("'number of curves' test", true);
-
-
-            int n = trustedCurves.length;
-            JSONArray jsonCurveResults = new JSONArray();
-
-            for (int i = 0; i < n; i++) {
-                JSONObject jsonCurveResult = new JSONObject();
-
-                double errTolerancePosition = 0.02;
-                double errPosition = findError(normalisePosition(trustedCurves[i].getPts()), normalisePosition(untrustedCurves[i].getPts()));
-                jsonCurveResult.put("errPosition", errPosition);
-                if (errPosition < errTolerancePosition) {
-                    System.out.println("Curve " + (i+1) + " pass 'position' test, error is " + errPosition);
-                    jsonCurveResult.put("position test", true);
-                } else {
-                    System.out.println("Curve " + (i+1) + " fail 'position' test, error is " + errPosition);
-                    jsonCurveResult.put("position test", false);
-                    isCorrect = false;
-                }
-
-                double errToleranceShape = 0.01;
-                double errShape = findError(normaliseShape(trustedCurves[i].getPts()), normaliseShape(untrustedCurves[i].getPts()));
-                jsonCurveResult.put("errShape", errShape);
-                if (errShape < errToleranceShape) {
-                    System.out.println("Curve " + (i+1) + " pass 'shape' test, error is " + errShape);
-                    jsonCurveResult.put("shape test", true);
-                } else {
-                    System.out.println("Curve " + (i+1) + " fail 'shape' test, error is " + errShape);
-                    jsonCurveResult.put("shape test", false);
-                    isCorrect = false;
-                }
-
-                if (testKnots(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())) {
-                    System.out.println("Curve " + (i+1) + " pass 'interX' test");
-                    jsonCurveResult.put("interX test", true);
-                } else {
-                    System.out.println("Curve " + (i+1) + " fail 'interX' test");
-                    jsonCurveResult.put("interX test", false);
-                    isCorrect = false;
-                }
-
-                if (testKnots(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())) {
-                    System.out.println("Curve " + (i+1) + " pass 'interY' test");
-                    jsonCurveResult.put("interY test", true);
-                } else {
-                    System.out.println("Curve " + (i+1) + " fail 'interY' test");
-                    jsonCurveResult.put("interY test", false);
-                    isCorrect = false;
-                }
-
-                if (testKnots(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())) {
-                    System.out.println("Curve " + (i+1) + " pass 'maxima' test");
-                    jsonCurveResult.put("maxima test", true);
-                } else {
-                    System.out.println("Curve " + (i+1) + " fail 'maxima' test");
-                    jsonCurveResult.put("maxima test", false);
-                    isCorrect = false;
-                }
-
-                if (testKnots(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima())) {
-                    System.out.println("Curve " + (i+1) + " pass 'minima' test");
-                    jsonCurveResult.put("minima test", true);
-                } else {
-                    System.out.println("Curve " + (i+1) + " fail 'minima' test");
-                    jsonCurveResult.put("minima test", false);
-                    isCorrect = false;
-                }
-
-                jsonCurveResults.add(jsonCurveResult);
-            }
-
-            jsonResult.put("details", jsonCurveResults);
+            jsonResult.put("errCause", "wrongNumOfCurves");
+            jsonResult.put("isCorrect", false);
+            return jsonResult.toJSONString();
         }
 
-        jsonResult.put("isCorrect", isCorrect);
-        System.out.println(isCorrect);
+        for (int i = 0; i < trustedCurves.length; i++) {
+            if (!testShape(trustedCurves[i].getPts(), untrustedCurves[i].getPts())) {
+                jsonResult.put("errCause", "wrongShape");
+                jsonResult.put("isCorrect", false);
+                return jsonResult.toJSONString();
+            }
+        }
+
+        for (int i = 0; i < trustedCurves.length; i++) {
+            boolean correct = true;
+            if (!testPosition(trustedCurves[i].getPts(), untrustedCurves[i].getPts())) {
+                correct = false;
+            } else if (!testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())) {
+                correct = false;
+            } else if (!testKnotsPosition(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())) {
+                correct = false;
+            } else if (!testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())) {
+                correct = false;
+            } else if (!testKnotsPosition(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima())) {
+                correct = false;
+            }
+
+            if (!correct) {
+                jsonResult.put("errCause", "wrongPosition");
+                jsonResult.put("isCorrect", false);
+                return jsonResult.toJSONString();
+            }
+        }
+
+        for (int i = 0; i < trustedCurves.length; i++) {
+            boolean correct = true;
+            if (!testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())) {
+                correct = false;
+            } else if (!testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())) {
+                correct = false;
+            } else if (!testKnotsSymbols(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())) {
+                correct = false;
+            } else if (!testKnotsSymbols(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima())) {
+                correct = false;
+            }
+
+            if (!correct) {
+                jsonResult.put("errCause", "wrongLabels");
+                jsonResult.put("isCorrect", false);
+                return jsonResult.toJSONString();
+            }
+        }
+
+        jsonResult.put("errCause", "null");
+        jsonResult.put("isCorrect", true);
         return jsonResult.toJSONString();
 	}
 
 
 	public static void main(String[] args) throws CheckerException, ParseException, IOException {
 
-	    String trustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
-        String untrustedJSONString = FileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
-        test(trustedJSONString, untrustedJSONString);
+	    String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
+        String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
+        System.out.println(test(trustedJSONString, untrustedJSONString));
+
     }
 	
 }

@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class FileReader {
+public class WholeFileReader {
 
     static String readFile(String path) throws IOException {
         File file = new File(path);

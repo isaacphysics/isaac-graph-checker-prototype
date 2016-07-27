@@ -15,7 +15,16 @@
  */
 
 public class Knot extends Point {
-    final Symbol symbol;
+    Symbol symbol;
+    Symbol xSymbol = null;
+    Symbol ySymbol = null;
+
+    public Knot(double x, double y, Symbol symbol, Symbol xSymbol, Symbol ySymbol) {
+        super(x, y);
+        this.symbol = symbol;
+        this.xSymbol = xSymbol;
+        this.ySymbol = ySymbol;
+    }
 
     public Knot(double x, double y, Symbol symbol) {
         super(x, y);

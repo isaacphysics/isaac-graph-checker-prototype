@@ -19,8 +19,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Parser {
 
@@ -28,7 +30,7 @@ public class Parser {
     public static HashMap<String, Object> parseInputJSONString(String JSONString) throws CheckerException, ParseException {
         JSONParser parser = new JSONParser();
 
-//        try {
+        try {
             Object obj = parser.parse(JSONString);
             JSONObject jsonData = (JSONObject) obj;
 
@@ -80,6 +82,7 @@ public class Parser {
                         Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
                         Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
                         String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
                         symbol = new Symbol(sx, sy, text);
                     }
 
@@ -101,6 +104,7 @@ public class Parser {
                         Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
                         Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
                         String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
                         symbol = new Symbol(sx, sy, text);
                     }
 
@@ -122,10 +126,31 @@ public class Parser {
                         Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
                         Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
                         String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
                         symbol = new Symbol(sx, sy, text);
                     }
 
-                    Knot knot = new Knot(x, y, symbol);
+                    Symbol xSymbol = null;
+                    if (jsonKnot.get("xSymbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("xSymbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
+                        xSymbol = new Symbol(sx, sy, text);
+                    }
+
+                    Symbol ySymbol = null;
+                    if (jsonKnot.get("ySymbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("ySymbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
+                        ySymbol = new Symbol(sx, sy, text);
+                    }
+
+                    Knot knot = new Knot(x, y, symbol, xSymbol, ySymbol);
                     maxima[j] = knot;
                 }
                 curve.setMaxima(maxima);
@@ -143,10 +168,32 @@ public class Parser {
                         Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
                         Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
                         String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
                         symbol = new Symbol(sx, sy, text);
                     }
 
-                    Knot knot = new Knot(x, y, symbol);
+                    Symbol xSymbol = null;
+                    if (jsonKnot.get("xSymbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("xSymbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
+                        xSymbol = new Symbol(sx, sy, text);
+                    }
+
+                    Symbol ySymbol = null;
+                    if (jsonKnot.get("ySymbol") != null) {
+                        JSONObject jsonSymbol = (JSONObject) jsonKnot.get("ySymbol");
+                        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                        String text = (String) jsonSymbol.get("text");
+                        if (text == null) throw new CheckerException("Invalid JSON: key information missing");
+                        ySymbol = new Symbol(sx, sy, text);
+                    }
+
+
+                    Knot knot = new Knot(x, y, symbol, xSymbol, ySymbol);
                     minima[j] = knot;
                 }
                 curve.setMinima(minima);
@@ -157,52 +204,40 @@ public class Parser {
 
             return data;
 
-//        } catch (NullPointerException npExn) {
-//            throw new CheckerException("Invalid JSON: key information missing");
-//        }
-    }
-
-    public static HashMap<String, Object> parseResultJSONString(String JSONString) throws ParseException {
-
-        JSONParser parser = new JSONParser();
-        HashMap<String, Object> result = new HashMap<String, Object>();
-
-        Object obj = parser.parse(JSONString);
-        JSONObject jsonResult = (JSONObject) obj;
-
-        result.put("descriptor", jsonResult.get("descriptor"));
-        result.put("isCorrect", jsonResult.get("isCorrect"));
-        result.put("test_symbols", jsonResult.get("test_symbols"));
-        result.put("test_number of segments", jsonResult.get("test_number of segments"));
-
-        JSONArray jsonSegmentsResults = (JSONArray) jsonResult.get("segmentsResults");
-        Object[] segmentsResults = new Object[jsonSegmentsResults.size()];
-        for (int i = 0; i < jsonSegmentsResults.size(); i++) {
-            JSONObject jsonSegmentResult = (JSONObject) jsonSegmentsResults.get(i);
-            HashMap<String, Object> segmentResult = new HashMap<String, Object>();
-
-            segmentResult.put("test_position", jsonSegmentResult.get("test_position"));
-            segmentResult.put("test_shape", jsonSegmentResult.get("test_shape"));
-            segmentResult.put("test_maxima", jsonSegmentResult.get("test_maxima"));
-            segmentResult.put("test_minima", jsonSegmentResult.get("test_minima"));
-            segmentResult.put("errPosition", jsonSegmentResult.get("errPosition"));
-            segmentResult.put("errShape", jsonSegmentResult.get("errShape"));
-
-            segmentsResults[i] = jsonSegmentResult;
+        } catch (NullPointerException npExn) {
+            throw new CheckerException("Invalid JSON: key information missing");
+        } catch (ClassCastException ccExn) {
+            throw new CheckerException("Invalid JSON: incorrect format");
         }
-
-        result.put("segmentsResults", segmentsResults);
-
-        return result;
     }
+
 
     public static boolean getIsCorrect(String JSONString) throws ParseException {
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(JSONString);
         JSONObject jsonResult = (JSONObject) obj;
-        boolean isCorrect = (Boolean) jsonResult.get("isCorrect");
-        return isCorrect;
+        boolean correct = (Boolean) jsonResult.get("isCorrect");
+        return correct;
     }
 
+    public static String getErrCause(String JSONString) throws ParseException {
+        JSONParser parser = new JSONParser();
+        Object obj = parser.parse(JSONString);
+        JSONObject jsonResult = (JSONObject) obj;
+        String errCause = (String) jsonResult.get("errCause");
+        return errCause;
+    }
+
+    public static void main(String[] args) {
+//        ArrayList<Integer> arr = new ArrayList<Integer>();
+//        arr.add(3);
+//        arr.add(1);
+//
+//        Map<String, Object> map = new HashMap<String, Object>();
+//        map.put("abc", "123");
+//        map.put("arr", arr);
+//        JSONObject json = new JSONObject(map);
+
+    }
 
 }
