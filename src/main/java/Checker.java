@@ -140,7 +140,17 @@ public class Checker {
         if (knots1.length != knots2.length) return false;
 
         for (int i = 0; i < knots1.length; i++) {
-            if ((knots1[i].x * knots2[i].x < 0) || (knots1[i].y * knots2[i].y < 0)) {
+            if (Math.abs(knots1[i].x) < 0.025 && Math.abs(knots2[i].x) < 0.025) {
+                if (Math.abs(knots1[i].y) < 0.025 && Math.abs(knots2[i].y) < 0.025) {
+                    continue;
+                } else if (knots1[i].y * knots2[i].y < 0) {
+                    return false;
+                }
+            } else if (Math.abs(knots1[i].y) < 0.025 && Math.abs(knots2[i].y) < 0.025) {
+                if (knots1[i].x * knots2[i].x < 0) {
+                    return false;
+                }
+            } else if ((knots1[i].x * knots2[i].x < 0) || (knots1[i].y * knots2[i].y < 0)) {
                 return false;
             }
         }

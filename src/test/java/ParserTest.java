@@ -13,7 +13,7 @@ public class ParserTest {
 
     @Test
     public void parserTest1() throws IOException, CheckerException, ParseException {
-        File file = new File("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/test/java/parserTestCase1.txt");
+        File file = new File("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/test/java/parserTestCase.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
 
         while (true) {
