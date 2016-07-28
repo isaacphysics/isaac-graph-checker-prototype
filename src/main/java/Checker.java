@@ -16,7 +16,8 @@
 
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -105,57 +106,133 @@ public class Checker {
         }
     }
 
-    private static boolean testKnotsSymbols(Knot[] knots1, Knot[] knots2) {
-        for (int i = 0; i < knots1.length; i++) {
+    private static boolean testKnotsSymbols(Knot[] trustedKnots, Knot[] untrustedKnots) {
+        if (trustedKnots.length != untrustedKnots.length) return false;
 
-            if (knots1[i].symbol != null && knots2[i].symbol == null) return false;
-            if (knots1[i].symbol == null && knots2[i].symbol != null) return false;
-            if (knots1[i].symbol != null && knots2[i].symbol != null) {
-                if (!knots1[i].symbol.text.equals(knots2[i].symbol.text)) {
-                    return false;
-                }
-            }
+        List<Knot> knots1 = Arrays.asList(trustedKnots);
+        List<Knot> knots2 = Arrays.asList(untrustedKnots);
+        boolean correct;
 
-            if (knots1[i].xSymbol != null && knots2[i].xSymbol == null) return false;
-            if (knots1[i].xSymbol == null && knots2[i].xSymbol != null) return false;
-            if (knots1[i].xSymbol != null && knots2[i].xSymbol != null) {
-                if (!knots1[i].xSymbol.text.equals(knots2[i].xSymbol.text)) {
-                    return false;
-                }
-            }
+        correct = true;
+        for (int i = 0; i < knots1.size(); i++) {
+            Knot knot1 = knots1.get(i);
+            Knot knot2 = knots2.get(i);
 
-            if (knots1[i].ySymbol != null && knots2[i].ySymbol == null) return false;
-            if (knots1[i].ySymbol == null && knots2[i].ySymbol != null) return false;
-            if (knots1[i].ySymbol != null && knots2[i].ySymbol != null) {
-                if (!knots1[i].ySymbol.text.equals(knots2[i].ySymbol.text)) {
-                    return false;
-                }
+            if (knot1.symbol != null && knot2.symbol == null) correct = false;
+            else if (knot1.symbol == null && knot2.symbol != null) correct = false;
+            else if (knot1.symbol != null && knot2.symbol != null) {
+                if (!knot1.symbol.text.equals(knot2.symbol.text)) correct = false;
             }
+            if (!correct) break;
+
+            if (knot1.xSymbol != null && knot2.xSymbol == null) correct = false;
+            else if (knot1.xSymbol == null && knot2.xSymbol != null) correct = false;
+            else if (knot1.xSymbol != null && knot2.xSymbol != null) {
+                if (!knot1.xSymbol.text.equals(knot2.xSymbol.text)) correct = false;
+            }
+            if (!correct) break;
+
+            if (knot1.ySymbol != null && knot2.ySymbol == null) correct = false;
+            else if (knot1.ySymbol == null && knot2.ySymbol != null) correct = false;
+            else if (knot1.ySymbol != null && knot2.ySymbol != null) {
+                if (!knot1.ySymbol.text.equals(knot2.ySymbol.text)) correct = false;
+            }
+            if (!correct) break;
         }
 
-        return true;
+        if (correct) return true;
+
+        Collections.reverse(knots2);
+
+        correct = true;
+        for (int i = 0; i < knots1.size(); i++) {
+            Knot knot1 = knots1.get(i);
+            Knot knot2 = knots2.get(i);
+
+            if (knot1.symbol != null && knot2.symbol == null) correct = false;
+            else if (knot1.symbol == null && knot2.symbol != null) correct = false;
+            else if (knot1.symbol != null && knot2.symbol != null) {
+                if (!knot1.symbol.text.equals(knot2.symbol.text)) correct = false;
+            }
+            if (!correct) break;
+
+            if (knot1.xSymbol != null && knot2.xSymbol == null) correct = false;
+            else if (knot1.xSymbol == null && knot2.xSymbol != null) correct = false;
+            else if (knot1.xSymbol != null && knot2.xSymbol != null) {
+                if (!knot1.xSymbol.text.equals(knot2.xSymbol.text)) correct = false;
+            }
+            if (!correct) break;
+
+            if (knot1.ySymbol != null && knot2.ySymbol == null) correct = false;
+            else if (knot1.ySymbol == null && knot2.ySymbol != null) correct = false;
+            else if (knot1.ySymbol != null && knot2.ySymbol != null) {
+                if (!knot1.ySymbol.text.equals(knot2.ySymbol.text)) correct = false;
+            }
+            if (!correct) break;
+        }
+
+        return correct;
     }
 
-    private static boolean testKnotsPosition(Knot[] knots1, Knot[] knots2) {
-        if (knots1.length != knots2.length) return false;
 
-        for (int i = 0; i < knots1.length; i++) {
-            if (Math.abs(knots1[i].x) < 0.025 && Math.abs(knots2[i].x) < 0.025) {
-                if (Math.abs(knots1[i].y) < 0.025 && Math.abs(knots2[i].y) < 0.025) {
+
+    private static boolean testKnotsPosition(Knot[] trustedKnots, Knot[] untrustedKnots) {
+
+        if (trustedKnots.length != untrustedKnots.length) return false;
+
+        List<Knot> knots1 = Arrays.asList(trustedKnots);
+        List<Knot> knots2 = Arrays.asList(untrustedKnots);
+        boolean correct;
+
+        correct = true;
+        for (int i = 0; i < trustedKnots.length; i++) {
+            Knot knot1 = knots1.get(i);
+            Knot knot2 = knots2.get(i);
+
+
+            if (Math.abs(knot1.x) < 0.025 && Math.abs(knot2.x) < 0.025) {
+                if ((Math.abs(knot1.y) < 0.025 && Math.abs(knot2.y) < 0.025)) {
                     continue;
-                } else if (knots1[i].y * knots2[i].y < 0) {
-                    return false;
+                } else if (knot1.y * knot2.y < 0) {
+                    correct = false;
                 }
-            } else if (Math.abs(knots1[i].y) < 0.025 && Math.abs(knots2[i].y) < 0.025) {
-                if (knots1[i].x * knots2[i].x < 0) {
-                    return false;
+            } else if (Math.abs(knot1.y) < 0.025 && Math.abs(knot2.y) < 0.025) {
+                if (knot1.x * knot2.x < 0) {
+                    correct = false;
                 }
-            } else if ((knots1[i].x * knots2[i].x < 0) || (knots1[i].y * knots2[i].y < 0)) {
-                return false;
+            } else if ((knot1.x * knot2.x < 0) || (knot1.y * knot2.y < 0)) {
+                correct = false;
             }
+
+            if (!correct) break;
         }
 
-        return true;
+        if (correct) return true;
+        Collections.reverse(knots2);
+
+        correct = true;
+        for (int i = 0; i < trustedKnots.length; i++) {
+            Knot knot1 = knots1.get(i);
+            Knot knot2 = knots2.get(i);
+
+            if (Math.abs(knot1.x) < 0.025 && Math.abs(knot2.x) < 0.025) {
+                if (Math.abs(knot1.y) < 0.025 && Math.abs(knot2.y) < 0.025) {
+                    continue;
+                } else if (knot1.y * knot2.y < 0) {
+                    correct = false;
+                }
+            } else if (Math.abs(knot1.y) < 0.025 && Math.abs(knot2.y) < 0.025) {
+                if (knot1.x * knot2.x < 0) {
+                    correct = false;
+                }
+            } else if ((knot1.x * knot2.x < 0) || (knot1.y * knot2.y < 0)) {
+                correct = false;
+            }
+
+            if (!correct) break;
+        }
+
+        return correct;
     }
 
 
