@@ -9,7 +9,7 @@
 
     <servlet>
         <servlet-name>Test</servlet-name>
-        <servlet-class>CheckerServlet</servlet-class>
+        <servlet-class>org.isaacphysics.labs.graph.checker.CheckerServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>

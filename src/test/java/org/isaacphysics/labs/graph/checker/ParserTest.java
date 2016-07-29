@@ -1,3 +1,5 @@
+package org.isaacphysics.labs.graph.checker;
+
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
 
@@ -13,7 +15,7 @@ public class ParserTest {
 
     @Test
     public void parserTest1() throws IOException, CheckerException, ParseException {
-        File file = new File("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/test/java/parserTestCase.txt");
+        File file = new File("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/test/java/org/isaacphysics/labs/graph/checker/parserTestCase.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
 
         while (true) {

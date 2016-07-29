@@ -1,3 +1,5 @@
+package org.isaacphysics.labs.graph.checker;
+
 /**
  * Copyright 2016 Junwei Yuan
  *
@@ -14,18 +16,20 @@
  * limitations under the License.
  */
 
-public class Point {
-	final double x;
-	final double y;
+public class Knot extends Point {
+    Symbol symbol;
+    Symbol xSymbol = null;
+    Symbol ySymbol = null;
 
+    public Knot(double x, double y, Symbol symbol, Symbol xSymbol, Symbol ySymbol) {
+        super(x, y);
+        this.symbol = symbol;
+        this.xSymbol = xSymbol;
+        this.ySymbol = ySymbol;
+    }
 
-	public Point(double x, double y) {
-		this.x = x;
-		this.y = y;
-	}
-
-	public static double getDist(Point pt1, Point pt2) {
-		return Math.sqrt(Math.pow(pt2.x - pt1.x, 2) + Math.pow(pt2.y - pt1.y, 2));
-	}
-
+    public Knot(double x, double y, Symbol symbol) {
+        super(x, y);
+        this.symbol = symbol;
+    }
 }

@@ -1,3 +1,5 @@
+package org.isaacphysics.labs.graph.checker;
+
 /**
  * Copyright 2016 Junwei Yuan
  *

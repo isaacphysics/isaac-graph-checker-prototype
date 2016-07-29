@@ -1,3 +1,4 @@
+package org.isaacphysics.labs.graph.checker;
 /**
  * Copyright 2016 Junwei Yuan
  *
@@ -25,6 +26,14 @@ import javax.servlet.http.HttpServletResponse;
 
 public class CheckerServlet extends HttpServlet {
 
+    /**
+     * handles POST request with url '/test'
+     *
+     * @param request
+     * @param response
+     * @throws ServletException
+     * @throws IOException
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 

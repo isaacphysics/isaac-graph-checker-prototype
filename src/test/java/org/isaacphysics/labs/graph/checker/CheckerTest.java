@@ -1,3 +1,4 @@
+package org.isaacphysics.labs.graph.checker;
 /**
  * Copyright 2016 Junwei Yuan
  *
@@ -13,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 
 import org.json.simple.parser.ParseException;
 import org.junit.Rule;
@@ -31,7 +33,7 @@ public class CheckerTest {
 
     @Test
     public void testcase() throws IOException, CheckerException, ParseException {
-        File file = new File("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/test/java/checkerTestcase.txt");
+        File file = new File("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/test/java/org/isaacphysics/labs/graph/checker/checkerTestcase.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
 
         while (true) {
@@ -117,7 +119,7 @@ public class CheckerTest {
     }
 
 //    @Test
-//    public void testCase7() throws IOException, CheckerException, ParseException {
+//    public void testCase7() throws IOException, org.isaacphysics.labs.graph.checker.CheckerException, ParseException {
 //        File file = new File("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/test/java/checkerTestcase.txt");
 //        BufferedReader br = new BufferedReader(new FileReader(file));
 //
@@ -130,22 +132,22 @@ public class CheckerTest {
 //            br.readLine();
 //            if (trustedJSONString == null) break;
 //
-//            String resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);
+//            String resultJSONString = org.isaacphysics.labs.graph.checker.Checker.test(trustedJSONString, untrustedJSONString);
 //            if (isCorrect.equals("true")) {
-//                assertTrue("test '" + descriptor + "': should be true;", Parser.getIsCorrect(resultJSONString));
+//                assertTrue("test '" + descriptor + "': should be true;", org.isaacphysics.labs.graph.checker.Parser.getIsCorrect(resultJSONString));
 //            } else if (isCorrect.equals("false")) {
-//                assertFalse("test '" + descriptor + "': should be false;", Parser.getIsCorrect(resultJSONString));
+//                assertFalse("test '" + descriptor + "': should be false;", org.isaacphysics.labs.graph.checker.Parser.getIsCorrect(resultJSONString));
 //            }
-//            assertEquals("test '" + descriptor + "': errCause incorrect;", errCause, Parser.getErrCause(resultJSONString));
+//            assertEquals("test '" + descriptor + "': errCause incorrect;", errCause, org.isaacphysics.labs.graph.checker.Parser.getErrCause(resultJSONString));
 //        }
 //
 //
 //
 //        try {
-//            String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/trusted7.json");
-//            String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/untrusted7.json");
-//            String resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);
-//        } catch (CheckerException exn) {
+//            String trustedJSONString = org.isaacphysics.labs.graph.checker.WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/trusted7.json");
+//            String untrustedJSONString = org.isaacphysics.labs.graph.checker.WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/untrusted7.json");
+//            String resultJSONString = org.isaacphysics.labs.graph.checker.Checker.test(trustedJSONString, untrustedJSONString);
+//        } catch (org.isaacphysics.labs.graph.checker.CheckerException exn) {
 //            assertThat(exn.getMessage(), is("Invalid JSON: incorrect format"));
 //        }
 //    }

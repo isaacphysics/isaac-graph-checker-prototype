@@ -1,3 +1,4 @@
+package org.isaacphysics.labs.graph.checker;
 /**
  * Copyright 2016 Junwei Yuan
  *
@@ -28,9 +29,9 @@ import static org.junit.Assert.*;
 public class CheckerServletTest {
 
 //    @Test
-//    public void testCase1() throws IOException, CheckerException, ServletException, ParseException {
+//    public void testCase1() throws IOException, org.isaacphysics.labs.graph.checker.CheckerException, ServletException, ParseException {
 //
-//        String untrustedJSONstring = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
+//        String untrustedJSONstring = org.isaacphysics.labs.graph.checker.WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
 //
 //        MockHttpServletRequest mshReq = new MockHttpServletRequest();
 //        mshReq.addParameter("data", untrustedJSONstring);
@@ -41,11 +42,11 @@ public class CheckerServletTest {
 //
 //        MockHttpServletResponse mhsResp = new MockHttpServletResponse();
 //
-//        CheckerServlet ts = new CheckerServlet();
+//        org.isaacphysics.labs.graph.checker.CheckerServlet ts = new org.isaacphysics.labs.graph.checker.CheckerServlet();
 //        ts.doPost(mshReq, mhsResp);
 //
 //        String resultJSONString = mhsResp.getContentAsString();
-//        boolean isCorrect = Parser.getIsCorrect(resultJSONString);
+//        boolean isCorrect = org.isaacphysics.labs.graph.checker.Parser.getIsCorrect(resultJSONString);
 //        assertFalse(isCorrect);
 //    }
 

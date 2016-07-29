@@ -1,3 +1,5 @@
+package org.isaacphysics.labs.graph.checker;
+
 /**
  * Copyright 2016 Junwei Yuan
  *
@@ -14,11 +16,11 @@
  * limitations under the License.
  */
 
-public class Symbol extends Point {
-    String text;
 
-    public Symbol(double x, double y, String text) {
-        super(x, y);
-        this.text = text;
+public class CheckerException extends Exception {
+
+    public CheckerException(String message) {
+        super(message);
     }
+
 }
