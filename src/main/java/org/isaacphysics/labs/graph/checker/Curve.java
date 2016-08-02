@@ -16,6 +16,9 @@ package org.isaacphysics.labs.graph.checker;
  * limitations under the License.
  */
 
+/**
+ * Curve represents a single curve. Trusted and untrusted data may include multiple curves.
+ */
 public class Curve {
 
     private Point[] pts;
@@ -44,23 +47,23 @@ public class Curve {
         return minima;
     }
 
-    public void setPts(Point[] pts) {
+    public void setPts(final Point[] pts) {
         this.pts = pts;
     }
 
-    public void setInterX(Knot[] interX) {
+    public void setInterX(final Knot[] interX) {
         this.interX = interX;
     }
 
-    public void setInterY(Knot[] interY) {
+    public void setInterY(final Knot[] interY) {
         this.interY = interY;
     }
 
-    public void setMaxima(Knot[] maxima) {
+    public void setMaxima(final Knot[] maxima) {
         this.maxima = maxima;
     }
 
-    public void setMinima(Knot[] minima) {
+    public void setMinima(final Knot[] minima) {
         this.minima = minima;
     }
 }

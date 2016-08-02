@@ -16,20 +16,20 @@ package org.isaacphysics.labs.graph.checker;
  * limitations under the License.
  */
 
+/**
+ * Knot represents a special point, (among maximum, minimum and intercepts). xSymbol is the symbol of the knot
+ * on the x-axis, and ySymbol is the symbol of knot on the y-axis.
+ */
 public class Knot extends Point {
-    Symbol symbol;
-    Symbol xSymbol = null;
-    Symbol ySymbol = null;
+    final Symbol symbol;
+    final Symbol xSymbol;
+    final Symbol ySymbol;
 
-    public Knot(double x, double y, Symbol symbol, Symbol xSymbol, Symbol ySymbol) {
+    public Knot(final double x, final double y, final Symbol symbol, final Symbol xSymbol, final Symbol ySymbol) {
         super(x, y);
         this.symbol = symbol;
         this.xSymbol = xSymbol;
         this.ySymbol = ySymbol;
     }
 
-    public Knot(double x, double y, Symbol symbol) {
-        super(x, y);
-        this.symbol = symbol;
-    }
 }

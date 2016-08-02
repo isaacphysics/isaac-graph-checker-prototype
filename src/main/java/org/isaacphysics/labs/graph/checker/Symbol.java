@@ -17,9 +17,8 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 /**
- * class for symbols.
+ * class for symbols
  */
-
 public class Symbol extends Point {
     final String text;
 

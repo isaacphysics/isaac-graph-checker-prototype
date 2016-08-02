@@ -16,6 +16,10 @@ package org.isaacphysics.labs.graph.checker;
  * limitations under the License.
  */
 
+
+/**
+ * Point represents a single point in the canvas
+ */
 public class Point {
 	final double x;
 	final double y;
