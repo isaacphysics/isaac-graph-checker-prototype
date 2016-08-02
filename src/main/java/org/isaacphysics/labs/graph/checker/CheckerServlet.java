@@ -24,18 +24,22 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
+/**
+ * A HttpServlet that receives POST request, and transfers the request data to Checker.
+ */
 public class CheckerServlet extends HttpServlet {
 
     /**
-     * handles POST request with url '/test'
-     *
-     * @param request
-     * @param response
-     * @throws ServletException
-     * @throws IOException
+     * handles POST request with url '/test'.
+     * @param request A HttpServletRequest
+     * @param response A HttpServletResponse
+     * @throws ServletException thrown when some servlet related exceptions occur
+     * @throws IOException thrown when fail to read trusted data from file
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
+            throws ServletException, IOException {
 
         System.out.println("-----------------------");
         System.out.println("Request handler 'test' is called.");

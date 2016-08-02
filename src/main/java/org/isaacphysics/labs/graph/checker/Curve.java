@@ -17,7 +17,12 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 /**
- * Curve represents a single curve. Trusted and untrusted data may include multiple curves.
+ * Trusted and untrusted graph may include multiple curves. Each curve has fields:
+ * pts: for points constituting the curve
+ * interX: x intercepts
+ * interY: y intercepts
+ * maxima: maxima
+ * minima: minima
  */
 public class Curve {
 

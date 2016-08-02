@@ -16,10 +16,7 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -54,7 +51,7 @@ public final class Checker {
 		double maxX = pts[0].x;
 		double minY = pts[0].y;
 		double maxY = pts[0].y;
-		for (int i = 0; i < pts.length; i++) {
+		for (int i = 1; i < pts.length; i++) {
 			minX = Math.min(minX, pts[i].x);
 			maxX = Math.max(maxX, pts[i].x);
 			minY = Math.min(minY, pts[i].y);
@@ -65,7 +62,21 @@ public final class Checker {
 		
 		Point[] normalised = new Point[pts.length];
 		for (int i = 0; i < pts.length; i++) {
-			normalised[i] = new Point((pts[i].x - minX) / rangeX, (pts[i].y - minY) / rangeY);
+            double nx;
+            if (rangeX == 0) {
+                nx = 0;
+            } else {
+                nx = (pts[i].x - minX) / rangeX;
+            }
+
+            double ny;
+            if (rangeY == 0) {
+                ny = 0;
+            } else {
+                ny = (pts[i].y - minY) / rangeY;
+            }
+
+			normalised[i] = new Point(nx, ny);
 		}
 		
 		return normalised;
@@ -81,16 +92,30 @@ public final class Checker {
      * @return normalised points
      */
 	private static Point[] normalisePosition(final Point[] pts) {
-		double maxX = 0;
-		double maxY = 0;
-		for (int i = 0; i < pts.length; i++) {
+		double maxX = pts[0].x;
+		double maxY = pts[0].y;
+		for (int i = 1; i < pts.length; i++) {
             maxX = Math.max(maxX, Math.abs(pts[i].x));
             maxY = Math.max(maxY, Math.abs(pts[i].y));
 		}
 
 		Point[] normalised = new Point[pts.length];
 		for (int i = 0; i < pts.length; i++) {
-		    normalised[i] = new Point(pts[i].x / maxX, pts[i].y / maxY);
+		    double nx;
+            if (maxX == 0) {
+                nx = 0;
+            } else {
+                nx = pts[i].x / maxX;
+            }
+
+            double ny;
+            if (maxY == 0) {
+                ny = 0;
+            } else {
+                ny = pts[i].y / maxY;
+            }
+
+		    normalised[i] = new Point(nx, ny);
         }
 
         return normalised;
@@ -133,7 +158,7 @@ public final class Checker {
      * @param trustedPts points of curve in the answer
      * @param untrustedPts points of corresponding curve of user
      * @return true if two curves are at similar position relative to origin, false otherwise
-     * @throws CheckerException thrown when two curves have different number of curves
+     * @throws CheckerException thrown when two curves have different number of points
      */
     public static boolean testPosition(final Point[] trustedPts, final Point[] untrustedPts) throws CheckerException {
         double errPosition = findError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
@@ -146,7 +171,7 @@ public final class Checker {
      * @param trustedPts points of curve in the answer
      * @param untrustedPts points of corresponding curve of user
      * @return true if two curves are at similar shape, false otherwise
-     * @throws CheckerException thrown when two curves have different number of curves
+     * @throws CheckerException thrown when two curves have different number of points
      */
     public static boolean testShape(final Point[] trustedPts, final Point[] untrustedPts) throws CheckerException {
         double errShape = findError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
@@ -168,104 +193,44 @@ public final class Checker {
             return false;
         }
 
-        List<Knot> knots1 = Arrays.asList(trustedKnots);
-        List<Knot> knots2 = Arrays.asList(untrustedKnots);
-        boolean correct;
+        boolean correct = true;
+        for (int i = 0; i < trustedKnots.length && correct; i++) {
+            Knot knot1 = trustedKnots[i];
+            Knot knot2 = untrustedKnots[i];
 
-        correct = true;
-        for (int i = 0; i < knots1.size(); i++) {
-            Knot knot1 = knots1.get(i);
-            Knot knot2 = knots2.get(i);
+            // correct when
+            // 1. both knot1 and knot2 has null symbol;
+            // 2. both knot has non-null symbol, and two symbols has the same text.
+            // the same test is applied also on xSymbol and ySymbol, and for result to be correct, all three tests need
+            // to be correct.
+            correct = ((knot1.symbol == null && knot2.symbol == null)
+                    || (knot1.symbol != null && knot2.symbol != null && knot1.symbol.text.equals(knot2.symbol.text)))
 
-            if (knot1.symbol != null && knot2.symbol == null) {
-                correct = false;
-            } else if (knot1.symbol == null && knot2.symbol != null) {
-                correct = false;
-            } else if (knot1.symbol != null && knot2.symbol != null) {
-                if (!knot1.symbol.text.equals(knot2.symbol.text)) {
-                    correct = false;
-                }
-            }
-            if (!correct) {
-                break;
-            }
+                    && ((knot1.xSymbol == null && knot2.xSymbol == null)
+                    || (knot1.xSymbol != null && knot2.xSymbol != null && knot1.xSymbol.text.equals(knot2.xSymbol.text)))
 
-            if (knot1.xSymbol != null && knot2.xSymbol == null) {
-                correct = false;
-            } else if (knot1.xSymbol == null && knot2.xSymbol != null) {
-                correct = false;
-            } else if (knot1.xSymbol != null && knot2.xSymbol != null) {
-                if (!knot1.xSymbol.text.equals(knot2.xSymbol.text)) {
-                    correct = false;
-                }
-            }
-            if (!correct) {
-                break;
-            }
-
-            if (knot1.ySymbol != null && knot2.ySymbol == null) {
-                correct = false;
-            } else if (knot1.ySymbol == null && knot2.ySymbol != null) {
-                correct = false;
-            } else if (knot1.ySymbol != null && knot2.ySymbol != null) {
-                if (!knot1.ySymbol.text.equals(knot2.ySymbol.text)) {
-                    correct = false;
-                }
-            }
-            if (!correct) {
-                break;
-            }
+                    && ((knot1.ySymbol == null && knot2.ySymbol == null)
+                    || (knot1.ySymbol != null && knot2.ySymbol != null && knot1.ySymbol.text.equals(knot2.ySymbol.text)));
         }
 
         if (correct) {
             return true;
         }
 
-        Collections.reverse(knots2);
-
+        // if incorrect, do the same test with reversed trustedKnots
         correct = true;
-        for (int i = 0; i < knots1.size(); i++) {
-            Knot knot1 = knots1.get(i);
-            Knot knot2 = knots2.get(i);
+        for (int i = 0; i < trustedKnots.length && correct; i++) {
+            Knot knot1 = trustedKnots[i];
+            Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
 
-            if (knot1.symbol != null && knot2.symbol == null) {
-                correct = false;
-            } else if (knot1.symbol == null && knot2.symbol != null) {
-                correct = false;
-            } else if (knot1.symbol != null && knot2.symbol != null) {
-                if (!knot1.symbol.text.equals(knot2.symbol.text)) {
-                    correct = false;
-                }
-            }
-            if (!correct) {
-                break;
-            }
+            correct = ((knot1.symbol == null && knot2.symbol == null)
+                    || (knot1.symbol != null && knot2.symbol != null && knot1.symbol.text.equals(knot2.symbol.text)))
 
-            if (knot1.xSymbol != null && knot2.xSymbol == null) {
-                correct = false;
-            } else if (knot1.xSymbol == null && knot2.xSymbol != null) {
-                correct = false;
-            } else if (knot1.xSymbol != null && knot2.xSymbol != null) {
-                if (!knot1.xSymbol.text.equals(knot2.xSymbol.text)) {
-                    correct = false;
-                }
-            }
-            if (!correct) {
-                break;
-            }
+                    && ((knot1.xSymbol == null && knot2.xSymbol == null)
+                    || (knot1.xSymbol != null && knot2.xSymbol != null && knot1.xSymbol.text.equals(knot2.xSymbol.text)))
 
-            if (knot1.ySymbol != null && knot2.ySymbol == null) {
-                correct = false;
-            } else if (knot1.ySymbol == null && knot2.ySymbol != null) {
-                correct = false;
-            } else if (knot1.ySymbol != null && knot2.ySymbol != null) {
-                if (!knot1.ySymbol.text.equals(knot2.ySymbol.text)) {
-                    correct = false;
-                }
-            }
-            if (!correct) {
-                break;
-            }
+                    && ((knot1.ySymbol == null && knot2.ySymbol == null)
+                    || (knot1.ySymbol != null && knot2.ySymbol != null && knot1.ySymbol.text.equals(knot2.ySymbol.text)));
         }
 
         return correct;
@@ -283,69 +248,52 @@ public final class Checker {
      * @return true if they match, false otherwise
      */
     private static boolean testKnotsPosition(final Knot[] trustedKnots, final Knot[] untrustedKnots) {
-
         if (trustedKnots.length != untrustedKnots.length) {
             return false;
         }
 
-        List<Knot> knots1 = Arrays.asList(trustedKnots);
-        List<Knot> knots2 = Arrays.asList(untrustedKnots);
-        boolean correct;
+        boolean correct = true;
+        for (int i = 0; i < trustedKnots.length && correct; i++) {
+            Knot knot1 = trustedKnots[i];
+            Knot knot2 = untrustedKnots[i];
 
-        correct = true;
-        for (int i = 0; i < trustedKnots.length; i++) {
-            Knot knot1 = knots1.get(i);
-            Knot knot2 = knots2.get(i);
+            // correct when
+            // 1. two knots are in the same quadrant
+            // 2. two knots are near x axis, and they are at the same side of y axis
+            // 3. two knots are near y axis, and they are at the same side of x axis
+            // 4. two knots are around the origin
+            correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
 
+                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && knot1.x * knot2.x >= 0)
 
-            if (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS) {
-                if (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS) {
-                    continue;
-                } else if (knot1.y * knot2.y < 0) {
-                    correct = false;
-                }
-            } else if (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS) {
-                if (knot1.x * knot2.x < 0) {
-                    correct = false;
-                }
-            } else if ((knot1.x * knot2.x < 0) || (knot1.y * knot2.y < 0)) {
-                correct = false;
-            }
+                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
+                    && knot1.y * knot2.y >= 0)
 
-            if (!correct) {
-                break;
-            }
+                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
         }
 
         if (correct) {
             return true;
         }
-        Collections.reverse(knots2);
 
+        // if incorrect, do the same test with reversed untrustedKnots
         correct = true;
-        for (int i = 0; i < trustedKnots.length; i++) {
-            Knot knot1 = knots1.get(i);
-            Knot knot2 = knots2.get(i);
+        for (int i = 0; i < trustedKnots.length && correct; i++) {
+            Knot knot1 = trustedKnots[i];
+            Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
+            correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
 
-            if (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS) {
-                if (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS) {
-                    continue;
-                } else if (knot1.y * knot2.y < 0) {
-                    correct = false;
-                }
-            } else if (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS) {
-                if (knot1.x * knot2.x < 0) {
-                    correct = false;
-                }
-            } else if ((knot1.x * knot2.x < 0) || (knot1.y * knot2.y < 0)) {
-                correct = false;
-            }
+                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && knot1.x * knot2.x >= 0)
 
-            if (!correct) {
-                break;
-            }
+                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
+                    && knot1.y * knot2.y >= 0)
+
+                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
         }
-
         return correct;
     }
 
@@ -388,19 +336,11 @@ public final class Checker {
         }
 
         for (int i = 0; i < trustedCurves.length; i++) {
-            boolean correct = true;
-            if (!testPosition(trustedCurves[i].getPts(), untrustedCurves[i].getPts())) {
-                correct = false;
-            } else if (!testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())) {
-                correct = false;
-            } else if (!testKnotsPosition(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())) {
-                correct = false;
-            } else if (!testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())) {
-                correct = false;
-            } else if (!testKnotsPosition(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima())) {
-                correct = false;
-            }
-
+            boolean correct = testPosition(trustedCurves[i].getPts(), untrustedCurves[i].getPts())
+                    && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
+                    && testKnotsPosition(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
+                    && testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
+                    && testKnotsPosition(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
             if (!correct) {
                 jsonResult.put("errCause", "wrongPosition");
                 jsonResult.put("isCorrect", false);
@@ -409,17 +349,10 @@ public final class Checker {
         }
 
         for (int i = 0; i < trustedCurves.length; i++) {
-            boolean correct = true;
-            if (!testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())) {
-                correct = false;
-            } else if (!testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())) {
-                correct = false;
-            } else if (!testKnotsSymbols(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())) {
-                correct = false;
-            } else if (!testKnotsSymbols(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima())) {
-                correct = false;
-            }
-
+            boolean correct = testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
+                    && testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
+                    && testKnotsSymbols(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
+                    && testKnotsSymbols(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
             if (!correct) {
                 jsonResult.put("errCause", "wrongLabels");
                 jsonResult.put("isCorrect", false);

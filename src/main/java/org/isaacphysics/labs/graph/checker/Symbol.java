@@ -17,7 +17,7 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 /**
- * class for symbols
+ * Symbol extends from Point, and carries additional 'text' field, which is the label of the symbol.
  */
 public class Symbol extends Point {
     final String text;

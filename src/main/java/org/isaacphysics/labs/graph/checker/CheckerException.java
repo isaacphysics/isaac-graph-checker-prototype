@@ -16,10 +16,16 @@ package org.isaacphysics.labs.graph.checker;
  * limitations under the License.
  */
 
-
+/**
+ * Exception thrown when untrusted information misses key information or does not comply with predefined format.
+ */
 public class CheckerException extends Exception {
 
-    public CheckerException(String message) {
+    /**
+     * constructor for CheckerException.
+     * @param message messages indicating the cause of exception.
+     */
+    public CheckerException(final String message) {
         super(message);
     }
 

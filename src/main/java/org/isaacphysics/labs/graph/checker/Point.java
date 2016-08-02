@@ -18,26 +18,26 @@ package org.isaacphysics.labs.graph.checker;
 
 
 /**
- * Point represents a single point in the canvas
+ * Point represents a single point in the canvas.
  */
 public class Point {
 	final double x;
 	final double y;
 
 
-	public Point(double x, double y) {
+	public Point(final double x, final double y) {
 		this.x = x;
 		this.y = y;
 	}
 
     /**
-     * claculate the distance between two org.isaacphysics.labs.graph.checker.Point instances
+     * claculate the distance between two points instances.
      *
      * @param pt1 point 1
      * @param pt2 point 2
      * @return the distance between two points calculated by sqrt((dx)^2 + (dy)^2)
      */
-	public static double getDist(Point pt1, Point pt2) {
+	public static double getDist(final Point pt1, final Point pt2) {
 		return Math.sqrt(Math.pow(pt2.x - pt1.x, 2) + Math.pow(pt2.y - pt1.y, 2));
 	}
 
