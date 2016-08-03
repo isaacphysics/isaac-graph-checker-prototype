@@ -31,7 +31,7 @@ public class Point {
 	}
 
     /**
-     * claculate the distance between two points instances.
+     * claculate the distance between two points.
      *
      * @param pt1 point 1
      * @param pt2 point 2

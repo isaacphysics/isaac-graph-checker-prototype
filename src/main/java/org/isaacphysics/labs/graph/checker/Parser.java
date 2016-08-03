@@ -39,52 +39,60 @@ public final class Parser {
 
     /**
      * parse information of a knot from the corresponding JSON object.
-     * @param jsonKnot the JSON object that contains information of that knot
+     * @param jsonKnots the JSON object that contains information of a set of knots
      * @return an instance Knot
      * @throws CheckerException thrown if some information is missing in the JSON object.
      */
-    private static Knot parseJSONKnot(final JSONObject jsonKnot) throws CheckerException {
-        Double x = ((Number) jsonKnot.get("x")).doubleValue();
-        Double y = ((Number) jsonKnot.get("y")).doubleValue();
+    private static Knot[] parseJSONKnots(final JSONArray jsonKnots) throws CheckerException {
 
-        Symbol symbol = null;
-        if (jsonKnot.get("symbol") != null) {
-            JSONObject jsonSymbol = (JSONObject) jsonKnot.get("symbol");
-            Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
-            Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
-            String text = (String) jsonSymbol.get("text");
-            if (text == null) {
-                throw new CheckerException("Invalid JSON: key information missing");
+        Knot[] knots = new Knot[jsonKnots.size()];
+        for (int j = 0; j < jsonKnots.size(); j++) {
+            JSONObject jsonKnot = (JSONObject) jsonKnots.get(j);
+
+            Double x = ((Number) jsonKnot.get("x")).doubleValue();
+            Double y = ((Number) jsonKnot.get("y")).doubleValue();
+
+            Symbol symbol = null;
+            if (jsonKnot.get("symbol") != null) {
+                JSONObject jsonSymbol = (JSONObject) jsonKnot.get("symbol");
+                Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                String text = (String) jsonSymbol.get("text");
+                if (text == null) {
+                    throw new CheckerException("Invalid JSON: key information missing");
+                }
+                symbol = new Symbol(sx, sy, text);
             }
-            symbol = new Symbol(sx, sy, text);
+
+            Symbol xSymbol = null;
+            if (jsonKnot.get("xSymbol") != null) {
+                JSONObject jsonSymbol = (JSONObject) jsonKnot.get("xSymbol");
+                Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                String text = (String) jsonSymbol.get("text");
+                if (text == null) {
+                    throw new CheckerException("Invalid JSON: key information missing");
+                }
+                xSymbol = new Symbol(sx, sy, text);
+            }
+
+            Symbol ySymbol = null;
+            if (jsonKnot.get("ySymbol") != null) {
+                JSONObject jsonSymbol = (JSONObject) jsonKnot.get("ySymbol");
+                Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+                Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+                String text = (String) jsonSymbol.get("text");
+                if (text == null) {
+                    throw new CheckerException("Invalid JSON: key information missing");
+                }
+                ySymbol = new Symbol(sx, sy, text);
+            }
+
+            Knot knot = new Knot(x, y, symbol, xSymbol, ySymbol);
+            knots[j] = knot;
         }
 
-        Symbol xSymbol = null;
-        if (jsonKnot.get("xSymbol") != null) {
-            JSONObject jsonSymbol = (JSONObject) jsonKnot.get("xSymbol");
-            Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
-            Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
-            String text = (String) jsonSymbol.get("text");
-            if (text == null) {
-                throw new CheckerException("Invalid JSON: key information missing");
-            }
-            xSymbol = new Symbol(sx, sy, text);
-        }
-
-        Symbol ySymbol = null;
-        if (jsonKnot.get("ySymbol") != null) {
-            JSONObject jsonSymbol = (JSONObject) jsonKnot.get("ySymbol");
-            Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
-            Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
-            String text = (String) jsonSymbol.get("text");
-            if (text == null) {
-                throw new CheckerException("Invalid JSON: key information missing");
-            }
-            ySymbol = new Symbol(sx, sy, text);
-        }
-
-        Knot knot = new Knot(x, y, symbol, xSymbol, ySymbol);
-        return knot;
+        return knots;
     }
 
     /**
@@ -141,36 +149,16 @@ public final class Parser {
                 }
                 curve.setPts(pts);
 
-                JSONArray jsonInterX = (JSONArray) jsonCurve.get("interX");
-                Knot[] interX = new Knot[jsonInterX.size()];
-                for (int j = 0; j < jsonInterX.size(); j++) {
-                    JSONObject jsonKnot = (JSONObject) jsonInterX.get(j);
-                    interX[j] = parseJSONKnot(jsonKnot);
-                }
+                Knot[] interX = parseJSONKnots((JSONArray) jsonCurve.get("interX"));
                 curve.setInterX(interX);
 
-                JSONArray jsonInterY = (JSONArray) jsonCurve.get("interY");
-                Knot[] interY = new Knot[jsonInterY.size()];
-                for (int j = 0; j < jsonInterY.size(); j++) {
-                    JSONObject jsonKnot = (JSONObject) jsonInterY.get(j);
-                    interY[j] = parseJSONKnot(jsonKnot);
-                }
+                Knot[] interY = parseJSONKnots((JSONArray) jsonCurve.get("interY"));
                 curve.setInterY(interY);
 
-                JSONArray jsonMaxima = (JSONArray) jsonCurve.get("maxima");
-                Knot[] maxima = new Knot[jsonMaxima.size()];
-                for (int j = 0; j < jsonMaxima.size(); j++) {
-                    JSONObject jsonKnot = (JSONObject) jsonMaxima.get(j);
-                    maxima[j] = parseJSONKnot(jsonKnot);
-                }
+                Knot[] maxima = parseJSONKnots((JSONArray) jsonCurve.get("maxima"));
                 curve.setMaxima(maxima);
 
-                JSONArray jsonMinima = (JSONArray) jsonCurve.get("minima");
-                Knot[] minima = new Knot[jsonMinima.size()];
-                for (int j = 0; j < jsonMinima.size(); j++) {
-                    JSONObject jsonKnot = (JSONObject) jsonMinima.get(j);
-                    minima[j] = parseJSONKnot(jsonKnot);
-                }
+                Knot[] minima = parseJSONKnots((JSONArray) jsonCurve.get("minima"));
                 curve.setMinima(minima);
 
                 curves[i] = curve;
@@ -179,10 +167,8 @@ public final class Parser {
 
             return data;
 
-        } catch (NullPointerException npExn) {
+        } catch (NullPointerException|ClassCastException npExn) {
             throw new CheckerException("Invalid JSON: key information missing");
-        } catch (ClassCastException ccExn) {
-            throw new CheckerException("Invalid JSON: incorrect format");
         }
     }
 
