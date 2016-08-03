@@ -37,10 +37,28 @@ public final class Parser {
         //
     }
 
+
     /**
-     * parse information of a knot from the corresponding JSON object.
+     * parse information of a symbol from corresponding JSON object.
+     * @param jsonSymbol the json object that contains information about the symbol
+     * @return an instance of Symbol
+     * @throws CheckerException thrown if label(field 'text') of the symbol is missing
+     */
+    private static Symbol parseJSONSymbol(final JSONObject jsonSymbol) throws CheckerException {
+        Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
+        Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
+        String text = (String) jsonSymbol.get("text");
+        if (text == null) {
+            throw new CheckerException("Invalid JSON: key information missing");
+        }
+        return new Symbol(sx, sy, text);
+    }
+
+
+    /**
+     * parse information of a set of knots from the corresponding JSON object.
      * @param jsonKnots the JSON object that contains information of a set of knots
-     * @return an instance Knot
+     * @return an instance of Knot
      * @throws CheckerException thrown if some information is missing in the JSON object.
      */
     private static Knot[] parseJSONKnots(final JSONArray jsonKnots) throws CheckerException {
@@ -55,37 +73,19 @@ public final class Parser {
             Symbol symbol = null;
             if (jsonKnot.get("symbol") != null) {
                 JSONObject jsonSymbol = (JSONObject) jsonKnot.get("symbol");
-                Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
-                Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
-                String text = (String) jsonSymbol.get("text");
-                if (text == null) {
-                    throw new CheckerException("Invalid JSON: key information missing");
-                }
-                symbol = new Symbol(sx, sy, text);
+                symbol = parseJSONSymbol(jsonSymbol);
             }
 
             Symbol xSymbol = null;
             if (jsonKnot.get("xSymbol") != null) {
                 JSONObject jsonSymbol = (JSONObject) jsonKnot.get("xSymbol");
-                Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
-                Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
-                String text = (String) jsonSymbol.get("text");
-                if (text == null) {
-                    throw new CheckerException("Invalid JSON: key information missing");
-                }
-                xSymbol = new Symbol(sx, sy, text);
+                xSymbol = parseJSONSymbol(jsonSymbol);
             }
 
             Symbol ySymbol = null;
             if (jsonKnot.get("ySymbol") != null) {
                 JSONObject jsonSymbol = (JSONObject) jsonKnot.get("ySymbol");
-                Double sx = ((Number) jsonSymbol.get("x")).doubleValue();
-                Double sy = ((Number) jsonSymbol.get("y")).doubleValue();
-                String text = (String) jsonSymbol.get("text");
-                if (text == null) {
-                    throw new CheckerException("Invalid JSON: key information missing");
-                }
-                ySymbol = new Symbol(sx, sy, text);
+                ySymbol = parseJSONSymbol(jsonSymbol);
             }
 
             Knot knot = new Knot(x, y, symbol, xSymbol, ySymbol);
