@@ -47,21 +47,21 @@ public final class Checker {
      * @return normalised points
      */
     private static Point[] normaliseShape(final Point[] pts) {
-		double minX = pts[0].x;
-		double maxX = pts[0].x;
-		double minY = pts[0].y;
-		double maxY = pts[0].y;
-		for (int i = 1; i < pts.length; i++) {
-			minX = Math.min(minX, pts[i].x);
-			maxX = Math.max(maxX, pts[i].x);
-			minY = Math.min(minY, pts[i].y);
-			maxY = Math.max(maxY, pts[i].y);
-		}
-		double rangeX = maxX - minX;
-		double rangeY = maxY - minY;
-		
-		Point[] normalised = new Point[pts.length];
-		for (int i = 0; i < pts.length; i++) {
+        double minX = pts[0].x;
+        double maxX = pts[0].x;
+        double minY = pts[0].y;
+        double maxY = pts[0].y;
+        for (int i = 1; i < pts.length; i++) {
+            minX = Math.min(minX, pts[i].x);
+            maxX = Math.max(maxX, pts[i].x);
+            minY = Math.min(minY, pts[i].y);
+            maxY = Math.max(maxY, pts[i].y);
+        }
+        double rangeX = maxX - minX;
+        double rangeY = maxY - minY;
+
+        Point[] normalised = new Point[pts.length];
+        for (int i = 0; i < pts.length; i++) {
             double nx;
             if (rangeX == 0) {
                 nx = 0;
@@ -76,11 +76,11 @@ public final class Checker {
                 ny = (pts[i].y - minY) / rangeY;
             }
 
-			normalised[i] = new Point(nx, ny);
-		}
-		
-		return normalised;
-	}
+            normalised[i] = new Point(nx, ny);
+        }
+
+        return normalised;
+    }
 
     /**
      * normalise points that make up a curve, the resultant points will be within a unit square
@@ -91,17 +91,17 @@ public final class Checker {
      * @param pts points that make up a curve
      * @return normalised points
      */
-	private static Point[] normalisePosition(final Point[] pts) {
-		double maxX = pts[0].x;
-		double maxY = pts[0].y;
-		for (int i = 1; i < pts.length; i++) {
+    private static Point[] normalisePosition(final Point[] pts) {
+        double maxX = pts[0].x;
+        double maxY = pts[0].y;
+        for (int i = 1; i < pts.length; i++) {
             maxX = Math.max(maxX, Math.abs(pts[i].x));
             maxY = Math.max(maxY, Math.abs(pts[i].y));
-		}
+        }
 
-		Point[] normalised = new Point[pts.length];
-		for (int i = 0; i < pts.length; i++) {
-		    double nx;
+        Point[] normalised = new Point[pts.length];
+        for (int i = 0; i < pts.length; i++) {
+            double nx;
             if (maxX == 0) {
                 nx = 0;
             } else {
@@ -115,11 +115,11 @@ public final class Checker {
                 ny = pts[i].y / maxY;
             }
 
-		    normalised[i] = new Point(nx, ny);
+            normalised[i] = new Point(nx, ny);
         }
 
         return normalised;
-	}
+    }
 
     /**
      * estimate the difference (error) between two curves.
@@ -310,7 +310,7 @@ public final class Checker {
      * @throws ParseException it is thrown when input JSON string cannot be parsed. It is thrown by the external library
      *      json.simple.
      */
-	public static String test(final String trustedJSONString, final String untrustedJSONString)
+    public static String test(final String trustedJSONString, final String untrustedJSONString)
                                                     throws CheckerException, ParseException {
 
         HashMap<String, Object> trustedData = Parser.parseInputJSONString(trustedJSONString);
@@ -321,7 +321,7 @@ public final class Checker {
 
         JSONObject jsonResult = new JSONObject();
 
-	    if (trustedCurves.length != untrustedCurves.length) {
+        if (trustedCurves.length != untrustedCurves.length) {
             jsonResult.put("errCause", "wrongNumOfCurves");
             jsonResult.put("isCorrect", false);
             return jsonResult.toJSONString();
@@ -363,15 +363,15 @@ public final class Checker {
         jsonResult.put("errCause", "null");
         jsonResult.put("isCorrect", true);
         return jsonResult.toJSONString();
-	}
+    }
 
 
-	public static void main(final String[] args) throws CheckerException, ParseException, IOException {
+    public static void main(final String[] args) throws CheckerException, ParseException, IOException {
 
-	    String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
+        String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
         String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
         System.out.println(test(trustedJSONString, untrustedJSONString));
 
     }
-	
+
 }
