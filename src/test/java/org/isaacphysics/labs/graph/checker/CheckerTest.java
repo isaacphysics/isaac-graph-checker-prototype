@@ -111,7 +111,6 @@ public class CheckerTest {
     public void testCase6() throws IOException, CheckerException, ParseException {
         String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/trusted6.json");
         String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/untrusted6.json");
-        fail("expected CheckerExcepiton: Invalid JSON format");
         thrown.expect(CheckerException.class);
         thrown.expectMessage("Invalid JSON: incorrect format");
         String resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);

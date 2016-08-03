@@ -167,8 +167,10 @@ public final class Parser {
 
             return data;
 
-        } catch (NullPointerException|ClassCastException npExn) {
+        } catch (NullPointerException npExn) {
             throw new CheckerException("Invalid JSON: key information missing");
+        } catch (ClassCastException e) {
+            throw new CheckerException("Invalid JSON: incorrect format");
         }
     }
 
