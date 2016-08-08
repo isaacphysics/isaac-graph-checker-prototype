@@ -16,8 +16,11 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 import org.json.simple.parser.ParseException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -41,24 +44,61 @@ public class CheckerServlet extends HttpServlet {
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
 
-        System.out.println("-----------------------");
-        System.out.println("Request handler 'test' is called.");
+        System.out.println("==================================================");
 
-        String untrustedJSONString = request.getParameter("data");
+        BufferedReader requestStringReader = request.getReader();
+        String requestString = "";
+        String line;
 
-        String resultJSONString = "";
-        try {
-            String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
-            resultJSONString = Checker.test(trustedJSONString, untrustedJSONString);
-        } catch (CheckerException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
+        // Read the JSON object
+        while ((line = requestStringReader.readLine()) != null) {
+
+            requestString += line;
+
         }
 
-//      response.setContentType("application/json");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().println(resultJSONString);
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+
+            @SuppressWarnings("unchecked")
+            HashMap<String, String> req = mapper.readValue(requestString, HashMap.class);
+
+            if (req.containsKey("description")) {
+                System.out.println(req.get("description"));
+                System.out.println("==================================================");
+            }
+
+            if (req.containsKey("target") && req.containsKey("test")) {
+
+                // Get target and test graph data strings from JSON object
+                String trustedJSONString = req.get("target");
+                String untrustedJSONString = req.get("test");
+
+                // Debug print
+                System.out.println("Input target: \"" + trustedJSONString + "\"");
+                System.out.println("Input test: \"" + untrustedJSONString + "\"");
+
+                // Return
+                System.out.println(Checker.test(untrustedJSONString, trustedJSONString));
+                response.getWriter().println(Checker.test(untrustedJSONString, trustedJSONString));
+
+            } else {
+                response.getWriter().println("{\"error\" : \"No input!\"}");
+                System.out.println("ERROR: No input!");
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Got an exception when checking expressions.
+            response.getWriter().println("{\"error\" : true}");
+            System.out.println("ERROR: Parser cannot parse input!");
+
+        }
+
+        System.out.println("==================================================\n");
+
     }
 
 }
