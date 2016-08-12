@@ -322,19 +322,21 @@ public final class Checker {
         JSONObject jsonResult = new JSONObject();
 
         if (trustedCurves.length != untrustedCurves.length) {
-            jsonResult.put("errCause", "wrongNumOfCurves");
-            jsonResult.put("isCorrect", false);
+            jsonResult.put("errCause", "You've drawn the wrong number of curves!");
+            jsonResult.put("equal", false);
             return jsonResult.toJSONString();
         }
 
+        // Test the shape of the curve
         for (int i = 0; i < trustedCurves.length; i++) {
             if (!testShape(trustedCurves[i].getPts(), untrustedCurves[i].getPts())) {
-                jsonResult.put("errCause", "wrongShape");
-                jsonResult.put("isCorrect", false);
+                jsonResult.put("errCause", "Your curve is the wrong shape!");
+                jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
         }
 
+        // Test the position of knots
         for (int i = 0; i < trustedCurves.length; i++) {
             boolean correct = testPosition(trustedCurves[i].getPts(), untrustedCurves[i].getPts())
                     && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
@@ -342,26 +344,28 @@ public final class Checker {
                     && testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
                     && testKnotsPosition(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
             if (!correct) {
-                jsonResult.put("errCause", "wrongPosition");
-                jsonResult.put("isCorrect", false);
+                jsonResult.put("errCause", "Your curve is positioned incorrectly!");
+                jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
         }
 
+        // Check that the labels are correctly positioned
         for (int i = 0; i < trustedCurves.length; i++) {
             boolean correct = testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
                     && testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
                     && testKnotsSymbols(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
                     && testKnotsSymbols(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
             if (!correct) {
-                jsonResult.put("errCause", "wrongLabels");
-                jsonResult.put("isCorrect", false);
+                jsonResult.put("errCause", "Your labels are incorrectly placed!");
+                jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }  
         }
 
+        // If we make it to here, we have an exact match with the correct answer.
         jsonResult.put("errCause", "null");
-        jsonResult.put("isCorrect", true);
+        jsonResult.put("equal", true);
         return jsonResult.toJSONString();
     }
 
