@@ -388,6 +388,8 @@ public final class Checker {
                 - test positions of intercepts
          Test: Labels
         */
+
+        System.out.println("__________________________________________________");
         System.out.println("Checking number of curves...");
         if (trustedCurves.length != untrustedCurves.length) {
             jsonResult.put("errCause", "You've drawn the wrong number of curves!");
@@ -396,6 +398,7 @@ public final class Checker {
         }
 
         // Test the shape of the curve
+        System.out.println("__________________________________________________");
         System.out.println("Checking shape of the curve...");
         for (int i = 0; i < trustedCurves.length; i++) {
             if (!testShape(trustedCurves[i].getPts(), untrustedCurves[i].getPts())) {
@@ -406,6 +409,7 @@ public final class Checker {
         }
 
         // Test the position of knots
+        System.out.println("__________________________________________________");
         System.out.println("Checking position of the curve...");
         for (int i = 0; i < trustedCurves.length; i++) {
             boolean correct = testPosition(trustedCurves[i].getPts(), untrustedCurves[i].getPts())
@@ -421,6 +425,7 @@ public final class Checker {
         }
 
         // Check that the labels are correctly positioned
+        System.out.println("__________________________________________________");
         System.out.println("Checking position of labels...");
         for (int i = 0; i < trustedCurves.length; i++) {
             boolean correct = testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
@@ -435,6 +440,7 @@ public final class Checker {
         }
 
         // If we make it to here, we have an exact match with the correct answer.
+        System.out.println("__________________________________________________");
         jsonResult.put("errCause", "null");
         jsonResult.put("equal", true);
         return jsonResult.toJSONString();
