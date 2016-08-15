@@ -32,6 +32,7 @@ public final class Checker {
     static final double ERR_TOLERANCE_SHAPE = 0.01;
     static final double ERR_TOLERANCE_GRAD = 0.1;
     static final double ORIGIN_RADIUS = 0.025;
+    static final double MAXIMUM_ERROR_TOLERANCE = 2.45;
 
     /**
      * Utility class should not have public or default constructor.
@@ -144,8 +145,10 @@ public final class Checker {
         err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
 
         double err2 = 0;
+        double max_error = 0;
         for (int i = 0; i < n; i++) {
             err2 += Math.pow(Point.getDist(pts1[(n - 1) - i], pts2[i]), NORM_DEGREE);
+            max_error = Math.max(Point.getDist(pts1[(n - 1) - i], pts2[i]), max_error);
         }
         err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
 
@@ -181,6 +184,27 @@ public final class Checker {
     }
 
     /**
+     * estimate the maximum (error) between two curves.
+     *
+     * @param pts1 points of one of the curve
+     * @param pts2 points of the other curve
+     * @return the maximumestimated error
+     * @throws CheckerException thrown if the two curves have different number of points
+     */
+    private static double findMaxError(final Point[] pts1, final Point[] pts2) throws CheckerException {
+        if (pts1.length != pts2.length) {
+            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
+        }
+        int n = pts1.length;
+        double max_error = 0;
+        for (int i = 0; i < n; i++) {
+            max_error = Math.max(Point.getDist(pts1[(n - 1) - i], pts2[i]), max_error);
+        }
+        System.out.println(max_error);
+        return max_error;
+    }
+
+    /**
      * Test the position of user's curve against the corresponding curve in the answer.
      *
      * @param trustedPts points of curve in the answer
@@ -190,7 +214,8 @@ public final class Checker {
      */
     public static boolean testPosition(final Point[] trustedPts, final Point[] untrustedPts) throws CheckerException {
         double errPosition = findError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
-        return errPosition < ERR_TOLERANCE_POSITION;
+        double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
+        return (errPosition < ERR_TOLERANCE_POSITION && maxErrPosition < MAXIMUM_ERROR_TOLERANCE);
     }
 
     /**
@@ -204,9 +229,8 @@ public final class Checker {
     public static boolean testShape(final Point[] trustedPts, final Point[] untrustedPts) throws CheckerException {
         double errShape = findError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
         double errGrad = findGradError(findGradient(trustedPts), findGradient(untrustedPts));
-        System.out.println("errShape: " + errShape);
-        System.out.println("errGrad: " + errGrad);
-        return errShape < ERR_TOLERANCE_SHAPE && errGrad < ERR_TOLERANCE_GRAD;
+        double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
+        return (errShape < ERR_TOLERANCE_SHAPE && maxErrPosition < MAXIMUM_ERROR_TOLERANCE && errGrad < ERR_TOLERANCE_GRAD);
     }
 
     /**
@@ -351,6 +375,19 @@ public final class Checker {
         Curve[] untrustedCurves = (Curve[]) untrustedData.get("curves");
 
         JSONObject jsonResult = new JSONObject();
+        /*
+         Test: Number of curves
+         Test: Number of intercepts
+         Test: Shape of curve
+                - total error
+                - max error
+                - number of turning points
+         Test: Position
+                - total error
+                - individual error
+                - test positions of intercepts
+         Test: Labels
+        */
 
         if (trustedCurves.length != untrustedCurves.length) {
             jsonResult.put("errCause", "You've drawn the wrong number of curves!");
@@ -391,7 +428,7 @@ public final class Checker {
                 jsonResult.put("errCause", "Your labels are incorrectly placed!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
-            }  
+            }
         }
 
         // If we make it to here, we have an exact match with the correct answer.
