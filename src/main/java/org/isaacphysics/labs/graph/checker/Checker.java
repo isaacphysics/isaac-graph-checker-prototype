@@ -388,7 +388,7 @@ public final class Checker {
                 - test positions of intercepts
          Test: Labels
         */
-
+        System.out.println("Checking number of curves...");
         if (trustedCurves.length != untrustedCurves.length) {
             jsonResult.put("errCause", "You've drawn the wrong number of curves!");
             jsonResult.put("equal", false);
@@ -396,6 +396,7 @@ public final class Checker {
         }
 
         // Test the shape of the curve
+        System.out.println("Checking shape of the curve...");
         for (int i = 0; i < trustedCurves.length; i++) {
             if (!testShape(trustedCurves[i].getPts(), untrustedCurves[i].getPts())) {
                 jsonResult.put("errCause", "Your curve is the wrong shape!");
@@ -405,6 +406,7 @@ public final class Checker {
         }
 
         // Test the position of knots
+        System.out.println("Checking position of the curve...");
         for (int i = 0; i < trustedCurves.length; i++) {
             boolean correct = testPosition(trustedCurves[i].getPts(), untrustedCurves[i].getPts())
                     && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
@@ -419,6 +421,7 @@ public final class Checker {
         }
 
         // Check that the labels are correctly positioned
+        System.out.println("Checking position of labels...");
         for (int i = 0; i < trustedCurves.length; i++) {
             boolean correct = testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
                     && testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
@@ -437,13 +440,5 @@ public final class Checker {
         return jsonResult.toJSONString();
     }
 
-
-    public static void main(final String[] args) throws CheckerException, ParseException, IOException {
-
-        String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
-        String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
-        System.out.println(test(trustedJSONString, untrustedJSONString));
-
-    }
 
 }
