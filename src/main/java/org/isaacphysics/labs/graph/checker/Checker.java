@@ -30,6 +30,7 @@ public final class Checker {
     static final double NORM_DEGREE = 3;
     static final double ERR_TOLERANCE_POSITION = 0.02;
     static final double ERR_TOLERANCE_SHAPE = 0.01;
+    static final double ERR_TOLERANCE_GRAD = 0.1;
     static final double ORIGIN_RADIUS = 0.025;
 
     /**
@@ -136,7 +137,6 @@ public final class Checker {
 
         int n = pts1.length;
 
-
         double err1 = 0;
         for (int i = 0; i < n; i++) {
             err1 += Math.pow(Point.getDist(pts1[i], pts2[i]), NORM_DEGREE);
@@ -146,6 +146,34 @@ public final class Checker {
         double err2 = 0;
         for (int i = 0; i < n; i++) {
             err2 += Math.pow(Point.getDist(pts1[(n - 1) - i], pts2[i]), NORM_DEGREE);
+        }
+        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
+
+        return Math.min(err1, err2);
+    }
+
+    private static double[] findGradient(final Point[] pts) {
+        double[] grad = new double[pts.length - 1];
+        for (int i = 0; i < grad.length; i++) {
+            double dx = pts[i+1].x - pts[i].x;
+            double dy = pts[i+1].y - pts[i].y;
+            grad[i] = dy / dx;
+        }
+        return grad;
+    }
+
+    private static double findGradError(final double[] trusted, final double[] untrusted) {
+        int n = trusted.length;
+
+        double err1 = 0;
+        for (int i = 0; i < n; i++) {
+            err1 += Math.pow(Math.abs(trusted[i] - untrusted[i]), NORM_DEGREE);
+        }
+        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
+
+        double err2 = 0;
+        for (int i = 0; i < n; i++) {
+            err2 += Math.pow(Math.abs(trusted[n - i - 1] - untrusted[i]), NORM_DEGREE);
         }
         err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
 
@@ -175,7 +203,10 @@ public final class Checker {
      */
     public static boolean testShape(final Point[] trustedPts, final Point[] untrustedPts) throws CheckerException {
         double errShape = findError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
-        return errShape < ERR_TOLERANCE_SHAPE;
+        double errGrad = findGradError(findGradient(trustedPts), findGradient(untrustedPts));
+        System.out.println("errShape: " + errShape);
+        System.out.println("errGrad: " + errGrad);
+        return errShape < ERR_TOLERANCE_SHAPE && errGrad < ERR_TOLERANCE_GRAD;
     }
 
     /**
