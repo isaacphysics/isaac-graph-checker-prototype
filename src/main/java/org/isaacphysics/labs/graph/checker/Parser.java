@@ -185,7 +185,7 @@ public final class Parser {
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(jsonString);
         JSONObject jsonResult = (JSONObject) obj;
-        boolean correct = (Boolean) jsonResult.get("isCorrect");
+        boolean correct = (Boolean) jsonResult.get("equal");
         return correct;
     }
 
