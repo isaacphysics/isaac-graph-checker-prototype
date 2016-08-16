@@ -453,15 +453,12 @@ public final class Checker {
             int degree = trustedCurves[i].getMaxima().length + untrustedCurves[i].getMinima().length;
             double shapeTolerance, gradTolerance;
 
-            if (degree == 0) {
+            if (degree <= 1) {
                 shapeTolerance = 0.05;
                 gradTolerance = 1;
-            } else if (degree == 1) {
-                shapeTolerance = 0.075;
-                gradTolerance = 1.5;
             } else {
                 shapeTolerance = 0.1;
-                gradTolerance = 2;
+                gradTolerance = 1.5;
             }
 
             Point[] trustedPts = trustedCurves[i].getPts();
