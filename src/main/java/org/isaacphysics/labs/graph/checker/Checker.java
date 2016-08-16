@@ -463,7 +463,7 @@ public final class Checker {
             //        System.out.println("numInflex1: " + numInflex1);
             //        System.out.println("numInflex2: " + numInflex2);
 
-            if (!(errShapeDtw < 0.1 && errGradDtw < 1)) {
+            if (!(errShapeDtw < 0.05 && errGradDtw < 1)) {
                 return false;
             }
         }
@@ -485,7 +485,7 @@ public final class Checker {
             System.out.println("errPositionDtw: " + errPositionDtw);
 //            double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
 
-            boolean correct = (errPositionDtw < 0.2)
+            boolean correct = (errPositionDtw < 0.5)
                     && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
                     && testKnotsPosition(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
                     && testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
