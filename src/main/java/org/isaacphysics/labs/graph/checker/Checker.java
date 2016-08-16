@@ -16,6 +16,7 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.json.simple.JSONObject;
@@ -28,9 +29,9 @@ import org.json.simple.parser.ParseException;
 public final class Checker {
 
     static final double NORM_DEGREE = 1.0;
-    static final double ERR_TOLERANCE_POSITION = 0.02;
-    static final double ERR_TOLERANCE_SHAPE = 0.01;
-    static final double ERR_TOLERANCE_GRAD = 0.1;
+    static final double ERR_TOLERANCE_POSITION = 0.5;
+    static final double ERR_TOLERANCE_SHAPE = 0.05;
+    static final double ERR_TOLERANCE_GRAD = 1;
     static final double ORIGIN_RADIUS = 0.025;
     static final double MAXIMUM_ERROR_TOLERANCE = 2.45;
 
@@ -123,57 +124,57 @@ public final class Checker {
         return normalised;
     }
 
-    /**
-     * estimate the difference (error) between two curves.
-     *
-     * @param pts1 points of one of the curve
-     * @param pts2 points of the other curve
-     * @return the estimated error
-     * @throws CheckerException thrown if the two curves have different number of points
-     */
-    private static double findError(final Point[] pts1, final Point[] pts2) throws CheckerException {
-        if (pts1.length != pts2.length) {
-            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
-        }
-
-        int n = pts1.length;
-
-        double err1 = 0;
-        for (int i = 0; i < n; i++) {
-            err1 += Math.pow(Point.getDist(pts1[i], pts2[i]), NORM_DEGREE);
-        }
-        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
-
-        double err2 = 0;
-        double max_error = 0;
-        for (int i = 0; i < n; i++) {
-            err2 += Math.pow(Point.getDist(pts1[(n - 1) - i], pts2[i]), NORM_DEGREE);
-            max_error = Math.max(Point.getDist(pts1[(n - 1) - i], pts2[i]), max_error);
-        }
-        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
-
-        return Math.min(err1, err2);
-    }
-
-    /**
-     * estimate the maximum (error) between two curves.
-     *
-     * @param pts1 points of one of the curve
-     * @param pts2 points of the other curve
-     * @return the maximumestimated error
-     * @throws CheckerException thrown if the two curves have different number of points
-     */
-    private static double findMaxError(final Point[] pts1, final Point[] pts2) throws CheckerException {
-        if (pts1.length != pts2.length) {
-            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
-        }
-        int n = pts1.length;
-        double max_error = 0;
-        for (int i = 0; i < n; i++) {
-            max_error = Math.max(Point.getDist(pts1[i], pts2[i]), max_error);
-        }
-        return max_error;
-    }
+//    /**
+//     * estimate the difference (error) between two curves.
+//     *
+//     * @param pts1 points of one of the curve
+//     * @param pts2 points of the other curve
+//     * @return the estimated error
+//     * @throws CheckerException thrown if the two curves have different number of points
+//     */
+//    private static double findError(final Point[] pts1, final Point[] pts2) throws CheckerException {
+//        if (pts1.length != pts2.length) {
+//            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
+//        }
+//
+//        int n = pts1.length;
+//
+//        double err1 = 0;
+//        for (int i = 0; i < n; i++) {
+//            err1 += Math.pow(Point.getDist(pts1[i], pts2[i]), NORM_DEGREE);
+//        }
+//        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
+//
+//        double err2 = 0;
+//        double max_error = 0;
+//        for (int i = 0; i < n; i++) {
+//            err2 += Math.pow(Point.getDist(pts1[(n - 1) - i], pts2[i]), NORM_DEGREE);
+//            max_error = Math.max(Point.getDist(pts1[(n - 1) - i], pts2[i]), max_error);
+//        }
+//        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
+//
+//        return Math.min(err1, err2);
+//    }
+//
+//    /**
+//     * estimate the maximum (error) between two curves.
+//     *
+//     * @param pts1 points of one of the curve
+//     * @param pts2 points of the other curve
+//     * @return the maximumestimated error
+//     * @throws CheckerException thrown if the two curves have different number of points
+//     */
+//    private static double findMaxError(final Point[] pts1, final Point[] pts2) throws CheckerException {
+//        if (pts1.length != pts2.length) {
+//            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
+//        }
+//        int n = pts1.length;
+//        double max_error = 0;
+//        for (int i = 0; i < n; i++) {
+//            max_error = Math.max(Point.getDist(pts1[i], pts2[i]), max_error);
+//        }
+//        return max_error;
+//    }
 
 
     private static double[] findGradient(final Point[] pts) {
@@ -192,97 +193,102 @@ public final class Checker {
         return grad;
     }
 
-
-    private static double findGradError(final double[] trusted, final double[] untrusted) {
-        int n = trusted.length;
-
-        double err1 = 0;
-        for (int i = 0; i < n; i++) {
-            err1 += Math.pow(Math.abs(trusted[i] - untrusted[i]), NORM_DEGREE);
-        }
-        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
-
-        double err2 = 0;
-        for (int i = 0; i < n; i++) {
-            err2 += Math.pow(Math.abs(trusted[n - i - 1] - untrusted[i]), NORM_DEGREE);
-        }
-        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
-
-        return Math.min(err1, err2);
-    }
+//
+//    private static double findGradError(final double[] trusted, final double[] untrusted) {
+//        int n = trusted.length;
+//
+//        double err1 = 0;
+//        for (int i = 0; i < n; i++) {
+//            err1 += Math.pow(Math.abs(trusted[i] - untrusted[i]), NORM_DEGREE);
+//        }
+//        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
+//
+//        double err2 = 0;
+//        for (int i = 0; i < n; i++) {
+//            err2 += Math.pow(Math.abs(trusted[n - i - 1] - untrusted[i]), NORM_DEGREE);
+//        }
+//        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
+//
+//        return Math.min(err1, err2);
+//    }
 
     private static double findError2(final Point[] trusted, final Point[] untrusted) throws CheckerException {
-        if (trusted.length != untrusted.length) {
-            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
-        }
-
         int n = trusted.length;
+        int m = untrusted.length;
 
-        double[][] dtw = new double[n+1][n+1];
+        double[][] dtw = new double[n+1][m+1];
         for (int i = 1; i <= n; i++) {
             dtw[i][0] = 10000;
-            dtw[0][i] = 10000;
+        }
+        for (int j = 1; j <= m; j++) {
+            dtw[0][j] = 10000;
         }
         dtw[0][0] = 0;
 
         for (int i = 1; i <= n; i++) {
-            for (int j = 1; j <= n; j++) {
+            for (int j = 1; j <= m; j++) {
                 double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[j-1]), NORM_DEGREE);
                 dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
             }
         }
-        double err1 = Math.pow(dtw[n][n], 1.0 / NORM_DEGREE) / n;
+        double err1 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
 
-        dtw = new double[n+1][n+1];
         for (int i = 1; i <= n; i++) {
             dtw[i][0] = 10000;
-            dtw[0][i] = 10000;
+        }
+        for (int j = 1; j <= m; j++) {
+            dtw[0][j] = 10000;
         }
         dtw[0][0] = 0;
 
         for (int i = 1; i <= n; i++) {
-            for (int j = 1; j <= n; j++) {
-                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[n-j]), NORM_DEGREE);
+            for (int j = 1; j <= m; j++) {
+                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[m-j]), NORM_DEGREE);
                 dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
             }
         }
-        double err2 = Math.pow(dtw[n][n], 1.0 / NORM_DEGREE) / n;
+        double err2 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
 
         return Math.min(err1, err2);
     }
 
     private static double findGradError2(final double[] trusted, final double[] untrusted) {
-        int n = trusted.length;
 
-        double[][] dtw = new double[n+1][n+1];
+        int n = trusted.length;
+        int m = untrusted.length;
+
+        double[][] dtw = new double[n+1][m+1];
         for (int i = 1; i <= n; i++) {
             dtw[i][0] = 10000;
-            dtw[0][i] = 10000;
+        }
+        for (int j = 1; j <= m; j++) {
+            dtw[0][j] = 10000;
         }
         dtw[0][0] = 0;
 
         for (int i = 1; i <= n; i++) {
-            for (int j = 1; j <= n; j++) {
+            for (int j = 1; j <= m; j++) {
                 double cost = Math.pow(Math.abs(trusted[i-1] - untrusted[j-1]), NORM_DEGREE);
                 dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
             }
         }
-        double err1 = Math.pow(dtw[n][n], 1.0 / NORM_DEGREE) / n;
+        double err1 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
 
-        dtw = new double[n+1][n+1];
         for (int i = 1; i <= n; i++) {
             dtw[i][0] = 10000;
-            dtw[0][i] = 10000;
+        }
+        for (int j = 1; j <= m; j++) {
+            dtw[0][j] = 10000;
         }
         dtw[0][0] = 0;
 
         for (int i = 1; i <= n; i++) {
-            for (int j = 1; j <= n; j++) {
-                double cost = Math.pow(Math.abs(trusted[i-1] - untrusted[n-j]), NORM_DEGREE);
+            for (int j = 1; j <= m; j++) {
+                double cost = Math.pow(Math.abs(trusted[i-1] - untrusted[m-j]), NORM_DEGREE);
                 dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
             }
         }
-        double err2 = Math.pow(dtw[n][n], 1.0 / NORM_DEGREE) / n;
+        double err2 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
 
         return Math.min(err1, err2);
     }
@@ -444,28 +450,61 @@ public final class Checker {
      */
     public static boolean testShape(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         for (int i = 0; i < trustedCurves.length; i++) {
+            int degree = trustedCurves[i].getMaxima().length + untrustedCurves[i].getMinima().length;
+            double shapeTolerance, gradTolerance;
+
+            if (degree == 0) {
+                shapeTolerance = 0.05;
+                gradTolerance = 1;
+            } else if (degree == 1) {
+                shapeTolerance = 0.075;
+                gradTolerance = 1.5;
+            } else {
+                shapeTolerance = 0.1;
+                gradTolerance = 2;
+            }
+
             Point[] trustedPts = trustedCurves[i].getPts();
             Point[] untrustedPts = untrustedCurves[i].getPts();
+            Point[] tmp;
 
-//            double errShape = findError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
-            //        double errGrad = findGradError(findGradient(trustedPts), findGradient(untrustedPts));
-            //        double maxErrShape = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
-            double errShapeDtw = findError2(normaliseShape(trustedPts), normaliseShape(untrustedPts));
-            double errGradDtw = findGradError2(findGradient(trustedPts), findGradient(untrustedPts));
-            //        int numInflex1 = findNumInflextions(trustedPts);
-            //        int numInflex2 = findNumInflextions(untrustedPts);
-
-            //        System.out.println("errShape: " + errShape);
-            System.out.println("errShapeDtw: " + errShapeDtw);
-            //        System.out.println("errGrad: " + errGrad);
-            System.out.println("errGradDtw: " + errGradDtw);
-            //        System.out.println("errMax: " + maxErrShape);
-            //        System.out.println("numInflex1: " + numInflex1);
-            //        System.out.println("numInflex2: " + numInflex2);
-
-            if (!(errShapeDtw < 0.05 && errGradDtw < 1)) {
-                return false;
+            double err = findError2(normaliseShape(trustedPts), normaliseShape(untrustedPts));
+            double errGrad = findGradError2(findGradient(trustedPts), findGradient(untrustedPts));
+            System.out.println("err: " + err);
+            System.out.println(errGrad);
+            if (err < shapeTolerance && errGrad < gradTolerance) {
+                continue;
             }
+
+            tmp = Arrays.copyOfRange(untrustedPts, 10, untrustedPts.length);
+            double err1 = findError2(normaliseShape(trustedPts), normaliseShape(tmp));
+            double errGrad1 = findGradError2(findGradient(trustedPts), findGradient(tmp));
+            System.out.println("err1: " + err1);
+            System.out.println(errGrad1);
+            if (err1 < shapeTolerance && errGrad1 < gradTolerance) {
+                continue;
+            }
+
+            tmp = Arrays.copyOfRange(untrustedPts, 0, untrustedPts.length - 10);
+            double err2 = findError2(normaliseShape(trustedPts), normaliseShape(tmp));
+            double errGrad2 = findGradError2(findGradient(trustedPts), findGradient(tmp));
+            System.out.println("err2: " + err2);
+            System.out.println(errGrad2);
+            if (err2 < shapeTolerance && errGrad2 < gradTolerance) {
+                continue;
+            }
+
+            tmp = Arrays.copyOfRange(untrustedPts, 5, untrustedPts.length - 5);
+            double err3 = findError2(normaliseShape(trustedPts), normaliseShape(tmp));
+            double errGrad3 = findGradError2(findGradient(trustedPts), findGradient(tmp));
+            System.out.println("err3: " + err3);
+            System.out.println(errGrad3);
+            if (err3 < shapeTolerance && errGrad3 < gradTolerance) {
+                continue;
+            }
+
+            // if we make it here
+            return false;
         }
 
         return true;
@@ -485,7 +524,7 @@ public final class Checker {
             System.out.println("errPositionDtw: " + errPositionDtw);
 //            double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
 
-            boolean correct = (errPositionDtw < 0.5)
+            boolean correct = (errPositionDtw < ERR_TOLERANCE_POSITION)
                     && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
                     && testKnotsPosition(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
                     && testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
@@ -519,6 +558,10 @@ public final class Checker {
 
         return true;
     }
+
+//    private static boolean getTestStrictness(Curve[] curves) {
+//
+//    }
 
 
     /**
