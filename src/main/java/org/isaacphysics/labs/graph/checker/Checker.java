@@ -16,8 +16,7 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -168,7 +167,7 @@ public final class Checker {
 
         double err1 = 0;
         for (int i = 0; i < n; i++) {
-            err1 += Math.pow(Point.getDist(pts1[i], pts2[i]), 2.0);
+            err1 += Math.pow(Point.getDist(pts1[i], pts2[i]), 1.0);
         }
 
         return err1 / n;
@@ -261,29 +260,32 @@ public final class Checker {
 
         for (int i = 1; i <= n; i++) {
             for (int j = 1; j <= m; j++) {
-                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[j-1]), NORM_DEGREE);
+                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[j-1]), 2.0);
                 dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
             }
         }
-        double err1 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
 
-        for (int i = 1; i <= n; i++) {
-            dtw[i][0] = 10000;
-        }
-        for (int j = 1; j <= m; j++) {
-            dtw[0][j] = 10000;
-        }
-        dtw[0][0] = 0;
+        return dtw[n][m];
 
-        for (int i = 1; i <= n; i++) {
-            for (int j = 1; j <= m; j++) {
-                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[m-j]), NORM_DEGREE);
-                dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
-            }
-        }
-        double err2 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
-
-        return Math.min(err1, err2);
+//        double err1 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
+//
+//        for (int i = 1; i <= n; i++) {
+//            dtw[i][0] = 10000;
+//        }
+//        for (int j = 1; j <= m; j++) {
+//            dtw[0][j] = 10000;
+//        }
+//        dtw[0][0] = 0;
+//
+//        for (int i = 1; i <= n; i++) {
+//            for (int j = 1; j <= m; j++) {
+//                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[m-j]), NORM_DEGREE);
+//                dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
+//            }
+//        }
+//        double err2 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
+//
+//        return Math.min(err1, err2);
     }
 
     private static double findGradError2(final double[] trusted, final double[] untrusted) {
@@ -473,6 +475,39 @@ public final class Checker {
         return correct;
     }
 
+    private static LinkedList<Point[]> splitCurve(Curve curve) {
+        LinkedList<Knot> knots = new LinkedList<Knot>();
+        for (Knot k : curve.getMaxima()) {
+            knots.add(k);
+        }
+        for (Knot k : curve.getMinima()) {
+            knots.add(k);
+        }
+        Collections.sort(knots);
+        knots.add(null);
+
+        Point[] pts = curve.getPts();
+        LinkedList<Point[]> sections = new LinkedList<Point[]>();
+
+        int i = 0;
+        Knot k = knots.pop();
+        while (i < pts.length && k != null) {
+            int j = i;
+            while (j < pts.length && pts[j].x < k.x) {
+                j++;
+            }
+            Point[] tmp = Arrays.copyOfRange(pts, i, j);
+            sections.add(tmp);
+            k = knots.pop();
+            i = j;
+        }
+        // add the last hunk
+        Point[] tmp = Arrays.copyOfRange(pts, i, pts.length);
+        sections.add(tmp);
+
+        return  sections;
+    }
+
 
     /**
      * Test the shape of user's curve against the corresponding curve in the answer.
@@ -483,63 +518,30 @@ public final class Checker {
      * @throws CheckerException thrown when two curves have different number of points
      */
     public static boolean testShape(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
+        double strict = 0.1;
+        double loose = 0.3;
+
         for (int i = 0; i < trustedCurves.length; i++) {
-            int degree = trustedCurves[i].getMaxima().length + untrustedCurves[i].getMinima().length;
-            double shapeTolerance, gradTolerance;
+            LinkedList<Point[]> sec1 = splitCurve(trustedCurves[i]);
+            LinkedList<Point[]> sec2 = splitCurve(untrustedCurves[i]);
 
-//            if (degree <= 1) {
-//                shapeTolerance = 0.05;
-//                gradTolerance = 1;
-//            } else {
-//                shapeTolerance = 0.1;
-//                gradTolerance = 1.5;
-//            }
+            for (int j = 0; j < sec1.size(); j++) {
+                Point[] pts1 = normaliseShape(sec1.get(j));
+                Point[] pts2 = normaliseShape(sec2.get(j));
+                double err = findError2(pts1, pts2);
+                System.out.println("err" + j + ":" + err);
 
-            Point[] trustedPts = trustedCurves[i].getPts();
-            Point[] untrustedPts = untrustedCurves[i].getPts();
-            Point[] tmp;
+                double tlr;
+                if (j == 0 || j == trustedCurves.length) {
+                    tlr = loose;
+                } else {
+                    tlr = strict;
+                }
 
-            Point[] normal = normaliseShape(trustedPts);
-
-            double err = findError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
-            double errGrad = findGradError(findGradient(trustedPts), findGradient(untrustedPts));
-            double errMax = findMaxError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
-            System.out.println("err: " + err);
-            System.out.println(errGrad);
-            System.out.println(errMax);
-            if (err < 0.01 && errMax < 0.15) {
-                continue;
+                if (err > tlr) {
+                    return false;
+                }
             }
-
-//            tmp = Arrays.copyOfRange(untrustedPts, 10, untrustedPts.length);
-//            double err1 = findError2(normaliseShape(trustedPts), normaliseShape(tmp));
-//            double errGrad1 = findGradError2(findGradient(trustedPts), findGradient(tmp));
-//            System.out.println("err1: " + err1);
-//            System.out.println(errGrad1);
-//            if (err1 < shapeTolerance && errGrad1 < gradTolerance) {
-//                continue;
-//            }
-//
-//            tmp = Arrays.copyOfRange(untrustedPts, 0, untrustedPts.length - 10);
-//            double err2 = findError2(normaliseShape(trustedPts), normaliseShape(tmp));
-//            double errGrad2 = findGradError2(findGradient(trustedPts), findGradient(tmp));
-//            System.out.println("err2: " + err2);
-//            System.out.println(errGrad2);
-//            if (err2 < shapeTolerance && errGrad2 < gradTolerance) {
-//                continue;
-//            }
-//
-//            tmp = Arrays.copyOfRange(untrustedPts, 5, untrustedPts.length - 5);
-//            double err3 = findError2(normaliseShape(trustedPts), normaliseShape(tmp));
-//            double errGrad3 = findGradError2(findGradient(trustedPts), findGradient(tmp));
-//            System.out.println("err3: " + err3);
-//            System.out.println(errGrad3);
-//            if (err3 < shapeTolerance && errGrad3 < gradTolerance) {
-//                continue;
-//            }
-
-            // if we make it here
-            return false;
         }
 
         return true;
@@ -634,7 +636,7 @@ public final class Checker {
          Test: Position
                 - total error
                 - individual error (maybe)
-                - test positions of intercepts
+                - test positions of intercepts and turning points
          Test: Labels
         */
 
@@ -675,19 +677,19 @@ public final class Checker {
             return jsonResult.toJSONString();
         }
 
-        // Test the position of knots
-        if (!testPosition(trustedCurves, untrustedCurves)) {
-            jsonResult.put("errCause", "Your curve is positioned incorrectly!");
-            jsonResult.put("equal", false);
-            return jsonResult.toJSONString();
-        }
-
-        // Check that the labels are correctly positioned
-        if (!testSymbols(trustedCurves, untrustedCurves)) {
-            jsonResult.put("errCause", "Your labels are incorrectly placed!");
-            jsonResult.put("equal", false);
-            return jsonResult.toJSONString();
-        }
+//        // Test the position of knots
+//        if (!testPosition(trustedCurves, untrustedCurves)) {
+//            jsonResult.put("errCause", "Your curve is positioned incorrectly!");
+//            jsonResult.put("equal", false);
+//            return jsonResult.toJSONString();
+//        }
+//
+//        // Check that the labels are correctly positioned
+//        if (!testSymbols(trustedCurves, untrustedCurves)) {
+//            jsonResult.put("errCause", "Your labels are incorrectly placed!");
+//            jsonResult.put("equal", false);
+//            return jsonResult.toJSONString();
+//        }
 
         // If we make it to here, we have an exact match with the correct answer.
         jsonResult.put("errCause", "null");

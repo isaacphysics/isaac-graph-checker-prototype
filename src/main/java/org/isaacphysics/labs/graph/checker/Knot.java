@@ -21,7 +21,7 @@ package org.isaacphysics.labs.graph.checker;
  * 'symbol' locates at (knot.x, knot.y), 'xSymbol' is at (knot.x, 0), and 'ySymbol' is at (0, knot.y). Intercepts
  * can only have 'symbol'.
  */
-public class Knot extends Point {
+public class Knot extends Point implements Comparable<Knot> {
     final Symbol symbol;
     final Symbol xSymbol;
     final Symbol ySymbol;
@@ -33,4 +33,14 @@ public class Knot extends Point {
         this.ySymbol = ySymbol;
     }
 
+    @Override
+    public int compareTo(Knot o) {
+        if (this.x < o.x) {
+            return -1;
+        } else if (this.x > o.x) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 }
