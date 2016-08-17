@@ -532,7 +532,7 @@ public final class Checker {
                 System.out.println("err" + j + ":" + err);
 
                 double tlr;
-                if (j == 0 || j == trustedCurves.length) {
+                if (j == 0 || j == sec1.size() - 1) {
                     tlr = loose;
                 } else {
                     tlr = strict;
@@ -649,15 +649,15 @@ public final class Checker {
         }
 
         // make sure each curve has right number of x,y intercepts.
-        for (int i = 0; i < trustedCurves.length; i++) {
-            boolean correct = (trustedCurves[i].getInterX().length == untrustedCurves[i].getInterX().length)
-                    && (trustedCurves[i].getInterX().length == untrustedCurves[i].getInterX().length);
-            if (!correct) {
-                jsonResult.put("errCause", "One of the curve contains wrong number of intercepts!");
-                jsonResult.put("equal", false);
-                return jsonResult.toJSONString();
-            }
-        }
+//        for (int i = 0; i < trustedCurves.length; i++) {
+//            boolean correct = (trustedCurves[i].getInterX().length == untrustedCurves[i].getInterX().length)
+//                    && (trustedCurves[i].getInterY().length == untrustedCurves[i].getInterY().length);
+//            if (!correct) {
+//                jsonResult.put("errCause", "One of the curve contains wrong number of intercepts!");
+//                jsonResult.put("equal", false);
+//                return jsonResult.toJSONString();
+//            }
+//        }
 
         // make sure each curve has right number of turning pts
         for (int i = 0; i < trustedCurves.length; i++) {
