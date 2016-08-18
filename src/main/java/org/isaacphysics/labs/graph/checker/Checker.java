@@ -474,69 +474,77 @@ public final class Checker {
 
 
     private static LinkedList<Point[]> splitCurve(Curve curve) {
-        Point[] pts = curve.getPts();
-
-        double[] grad = new double[pts.length - 1];
-        for (int i = 0; i < grad.length; i++) {
-            grad[i] = (pts[i+1].y - pts[i].y) / (pts[i+1].x - pts[i].x);
-        }
+        LinkedList<Knot> knots = new LinkedList<>();
+        knots.addAll(Arrays.asList(curve.getMaxima()));
+        knots.addAll(Arrays.asList(curve.getMinima()));
 
         int prev = 0;
+        Point[] pts = curve.getPts();
         LinkedList<Point[]> sections = new LinkedList<>();
-        for (int i = 1; i < grad.length; i++) {
-            if (grad[i-1] * grad[i] < 0 || grad[i] == 0) {
-                if ((pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) >= 0) {
-                    double range = 0.05;
-                    double limit = 0.05;
-
-                    int l = i - 1;
-                    while (l >= 0 && Point.getDist(pts[l], pts[i]) < range && Math.abs(grad[l]) < limit) {
-                        l--;
-                    }
-                    if (l < 0 || Point.getDist(pts[l], pts[i]) >= range) {
-                        continue;
-                    }
-
-                    int r = i;
-                    while (r < grad.length && Point.getDist(pts[i], pts[r + 1]) < range && Math.abs(grad[r]) < limit) {
-                        r++;
-                    }
-                    if (r >= grad.length || Point.getDist(pts[i], pts[r + 1]) >= range) {
-                        continue;
-                    }
-
-//                    int l = i - 2;
-//                    double acc1 = grad[i - 1];
-//                    while (l >= 0 && Point.getDist(pts[l], pts[i]) < range && Math.abs(acc1) < limit) {
-//                        acc1 += grad[l] - grad[l + 1];
-//                        l--;
-//                    }
-//                    if (Math.abs(acc1) < limit) {
-//                        continue;
-//                    }
-//
-//                    int r = i + 1;
-//                    double acc2 = grad[i];
-//                    while (r < grad.length && Point.getDist(pts[i], pts[r + 1]) < range && Math.abs(acc2) < limit) {
-//                        acc2 += grad[r] - grad[r - 1];
-//                        r++;
-//                    }
-//                    if (Math.abs(acc2) < limit) {
-//                        continue;
-//                    }
-
+        for (int i = 0; i < pts.length; i++) {
+            for (int j = 0; j < knots.size(); j++) {
+                if (pts[i].x == knots.get(j).x && pts[i].y == knots.get(j).y) {
+                    knots.remove(j);
                     Point[] tmp = Arrays.copyOfRange(pts, prev, i);
-                    sections.add(tmp);
+                    sections.push(tmp);
                     prev = i;
                 }
+            }
+
+            if (knots.size() == 0) {
+                break;
             }
         }
 
         Point[] tmp = Arrays.copyOfRange(pts, prev, pts.length);
-        sections.add(tmp);
-
+        sections.push(tmp);
         return sections;
     }
+
+//    private static LinkedList<Point[]> splitCurve(Curve curve) {
+//        Point[] pts = curve.getPts();
+//
+//        double[] grad = new double[pts.length - 1];
+//        for (int i = 0; i < grad.length; i++) {
+//            grad[i] = (pts[i+1].y - pts[i].y) / (pts[i+1].x - pts[i].x);
+//        }
+//
+//        int prev = 0;
+//        LinkedList<Point[]> sections = new LinkedList<>();
+//        for (int i = 1; i < grad.length; i++) {
+//            if (grad[i-1] * grad[i] < 0 || grad[i] == 0) {
+//                if ((pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) >= 0) {
+//                    double range = 0.05;
+//                    double limit = 0.05;
+//
+//                    int l = i - 1;
+//                    while (l >= 0 && Point.getDist(pts[l], pts[i]) < range && Math.abs(grad[l]) < limit) {
+//                        l--;
+//                    }
+//                    if (l < 0 || Point.getDist(pts[l], pts[i]) >= range) {
+//                        continue;
+//                    }
+//
+//                    int r = i;
+//                    while (r < grad.length && Point.getDist(pts[i], pts[r + 1]) < range && Math.abs(grad[r]) < limit) {
+//                        r++;
+//                    }
+//                    if (r >= grad.length || Point.getDist(pts[i], pts[r + 1]) >= range) {
+//                        continue;
+//                    }
+//
+//                    Point[] tmp = Arrays.copyOfRange(pts, prev, i);
+//                    sections.add(tmp);
+//                    prev = i;
+//                }
+//            }
+//        }
+//
+//        Point[] tmp = Arrays.copyOfRange(pts, prev, pts.length);
+//        sections.add(tmp);
+//
+//        return sections;
+//    }
 
 
     /**
