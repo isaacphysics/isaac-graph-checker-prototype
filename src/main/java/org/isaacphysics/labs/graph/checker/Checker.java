@@ -17,8 +17,6 @@ package org.isaacphysics.labs.graph.checker;
 
 import java.io.IOException;
 import java.util.*;
-
-import com.sun.tools.javac.comp.Check;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
