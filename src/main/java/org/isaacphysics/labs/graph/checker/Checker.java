@@ -16,7 +16,11 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
@@ -26,10 +30,6 @@ import org.json.simple.parser.ParseException;
  */
 public final class Checker {
 
-    static final double NORM_DEGREE = 2;
-    static final double ERR_TOLERANCE_POSITION = 0.5;
-    static final double ERR_TOLERANCE_SHAPE = 0.01;
-    static final double MAX_ERR_TOLERANCE = 0.15;
     static final double ORIGIN_RADIUS = 0.025;
     static final int NUM_COLOR = 3;
 
@@ -245,11 +245,21 @@ public final class Checker {
 //        return Math.min(err1, err2);
 //    }
 
-    private static double findError2(final Point[] trusted, final Point[] untrusted) throws CheckerException {
+    /**
+     * Calculate the error between two curves' points using "dynamic time wrapping". The algorithm is on wikipedia.
+     *
+     * Note the cost is square of distance between two matching points. This is inspired by method in
+     * "least error optimisation".
+     *
+     * @param trusted points of curve of answer
+     * @param untrusted points of curve of user
+     * @return the measured error.
+     */
+    private static double findDtwError(final Point[] trusted, final Point[] untrusted) {
         int n = trusted.length;
         int m = untrusted.length;
 
-        double[][] dtw = new double[n+1][m+1];
+        double[][] dtw = new double[n + 1][m + 1];
         for (int i = 1; i <= n; i++) {
             dtw[i][0] = 10000;
         }
@@ -260,8 +270,8 @@ public final class Checker {
 
         for (int i = 1; i <= n; i++) {
             for (int j = 1; j <= m; j++) {
-                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[j-1]), 2.0);
-                dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
+                double cost = Math.pow(Point.getDist(trusted[i - 1], untrusted[j - 1]), 2.0);
+                dtw[i][j] = cost + Math.min(Math.min(dtw[i - 1][j], dtw[i][j - 1]), dtw[i - 1][j - 1]);
             }
         }
 
@@ -277,8 +287,8 @@ public final class Checker {
 
         for (int i = 1; i <= n; i++) {
             for (int j = 1; j <= m; j++) {
-                double cost = Math.pow(Point.getDist(trusted[i-1], untrusted[m-j]), NORM_DEGREE);
-                dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
+                double cost = Math.pow(Point.getDist(trusted[i - 1], untrusted[m - j]), 2.0);
+                dtw[i][j] = cost + Math.min(Math.min(dtw[i - 1][j], dtw[i][j - 1]), dtw[i - 1][j - 1]);
             }
         }
         double err2 = dtw[n][m];
@@ -473,8 +483,12 @@ public final class Checker {
         return correct;
     }
 
-
-    private static LinkedList<Point[]> splitCurve(Curve curve) {
+    /**
+     * split a curve into an array of sections. The split points are turning points.
+     * @param curve the input curve
+     * @return an array of sections
+     */
+    private static LinkedList<Point[]> splitCurve(final Curve curve) {
         LinkedList<Knot> knots = new LinkedList<>();
         knots.addAll(Arrays.asList(curve.getMaxima()));
         knots.addAll(Arrays.asList(curve.getMinima()));
@@ -550,13 +564,13 @@ public final class Checker {
 
     /**
      * Test the shape of user's curve against the corresponding curve in the answer.
-     *
      * @param trustedCurves curves in the answer
      * @param untrustedCurves corresponding curves of user
      * @return true if two curves are at similar shape, false otherwise
-     * @throws CheckerException thrown when two curves have different number of points
+     * @throws CheckerException thrown when one curve is split into wrong number of sections. (this should not happen,
+     * if happens, then it is a problem of the splitting algorithm.)
      */
-    public static boolean testShape(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
+    private static boolean testShape(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         double strict = 0.1;
         double loose = 0.3;
 
@@ -575,7 +589,7 @@ public final class Checker {
             for (int j = 0; j < sec1.size(); j++) {
                 Point[] pts1 = normaliseShape(sec1.get(j));
                 Point[] pts2 = normaliseShape(sec2.get(j));
-                double err = findError2(pts1, pts2);
+                double err = findDtwError(pts1, pts2);
                 System.out.println("        sec " + j + ": " + err);
 
                 double tlr;
@@ -600,7 +614,7 @@ public final class Checker {
             for (int j = 0; j < sec1.size(); j++) {
                 Point[] pts1 = normaliseShape(sec1.get(j));
                 Point[] pts2 = normaliseShape(sec2.get(sec1.size() - j - 1));
-                double err = findError2(pts1, pts2);
+                double err = findDtwError(pts1, pts2);
                 System.out.println("        sec " + j + ": " + err);
 
                 double tlr;
@@ -628,7 +642,7 @@ public final class Checker {
      */
     public static boolean testPosition(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         for (int i = 0; i < trustedCurves.length; i++) {
-            double errPositionDtw = findError2(normalisePosition(trustedCurves[i].getPts()), normalisePosition(untrustedCurves[i].getPts()));
+            double errPositionDtw = findDtwError(normalisePosition(trustedCurves[i].getPts()), normalisePosition(untrustedCurves[i].getPts()));
 //            System.out.println("errPositionDtw: " + errPositionDtw);
 //            double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
 
@@ -653,7 +667,7 @@ public final class Checker {
      * @param untrustedCurves corresponding curves from user
      * @return true if the labels are correctly placed in user's curves
      */
-    private static boolean testSymbols(Curve[] trustedCurves, Curve[] untrustedCurves) {
+    private static boolean testSymbols(final Curve[] trustedCurves, final Curve[] untrustedCurves) {
         for (int i = 0; i < trustedCurves.length; i++) {
             boolean correct = testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
                     && testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
@@ -667,7 +681,13 @@ public final class Checker {
         return true;
     }
 
-    private static Curve[][] classify(Curve[] curves) {
+
+    /**
+     * separate curves according to their colors.
+     * @param curves the input curves
+     * @return an array of array of curves, each array of curve corresponds to curves drawn in one color.
+     */
+    private static Curve[][] classify(final Curve[] curves) {
         int n = NUM_COLOR;
 
         ArrayList<ArrayList<Curve>> result = new ArrayList<>();
@@ -698,11 +718,16 @@ public final class Checker {
         return export;
     }
 
-    private static String getColor(int idx) {
+    /**
+     * return a string (name of color) corresponding to a color index.
+     * @param idx color index of curve
+     * @return a string that includes color name
+     */
+    private static String getColor(final int idx) {
         String[] colors = {
-                "Blue",
-                "Orange",
-                "Green"
+            "Blue",
+            "Orange",
+            "Green"
         };
         return colors[idx];
     }
@@ -722,18 +747,19 @@ public final class Checker {
      */
     public static String test(final String targetJSONString, final String testJSONString)
                                                     throws CheckerException, ParseException {
-
+        // parse JSON string
         HashMap<String, Object> trustedData = Parser.parseInputJSONString(targetJSONString);
         Curve[] rawTargetCurves = (Curve[]) trustedData.get("curves");
 
         HashMap<String, Object> untrustedData = Parser.parseInputJSONString(testJSONString);
         Curve[] rawTestCurves = (Curve[]) untrustedData.get("curves");
 
-        JSONObject jsonResult = new JSONObject();
-
-
+        // separate curves according to their colors
         Curve[][] targetClasses = classify(rawTargetCurves);
         Curve[][] testClasses = classify(rawTestCurves);
+
+        // start testing
+        JSONObject jsonResult = new JSONObject();
 
         for (int j = 0; j < NUM_COLOR; j++) {
 
@@ -773,8 +799,7 @@ public final class Checker {
                 boolean correct = (targetCurves[i].getInterX().length == testCurves[i].getInterX().length)
                         && (targetCurves[i].getInterY().length == testCurves[i].getInterY().length);
                 if (!correct) {
-                    jsonResult.put("errCause", "Color " + color +
-                            ": One of the curve contains wrong number of intercepts!");
+                    jsonResult.put("errCause", "Color " + color + ": One of the curve contains wrong number of intercepts!");
                     jsonResult.put("equal", false);
                     return jsonResult.toJSONString();
                 }
@@ -785,8 +810,7 @@ public final class Checker {
                 boolean correct = (targetCurves[i].getMaxima().length == testCurves[i].getMaxima().length)
                         && (targetCurves[i].getMinima().length == testCurves[i].getMinima().length);
                 if (!correct) {
-                    jsonResult.put("errCause", "Color " + color +
-                            ":One of the curve contains wrong number of turning points.");
+                    jsonResult.put("errCause", "Color " + color + ":One of the curve contains wrong number of turning points.");
                     jsonResult.put("equal", false);
                     return jsonResult.toJSONString();
                 }
