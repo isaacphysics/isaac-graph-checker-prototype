@@ -561,6 +561,9 @@ public final class Checker {
         double loose = 0.3;
 
         for (int i = 0; i < trustedCurves.length; i++) {
+
+            System.out.println("    Curve " + i);
+
             LinkedList<Point[]> sec1 = splitCurve(trustedCurves[i]);
             LinkedList<Point[]> sec2 = splitCurve(untrustedCurves[i]);
 
@@ -573,7 +576,7 @@ public final class Checker {
                 Point[] pts1 = normaliseShape(sec1.get(j));
                 Point[] pts2 = normaliseShape(sec2.get(j));
                 double err = findError2(pts1, pts2);
-                System.out.println("err" + j + ":" + err);
+                System.out.println("        sec " + j + ": " + err);
 
                 double tlr;
                 if (j == 0 || j == sec1.size() - 1) {
@@ -592,11 +595,13 @@ public final class Checker {
                 continue;
             }
 
+            System.out.println("        reverse");
+
             for (int j = 0; j < sec1.size(); j++) {
                 Point[] pts1 = normaliseShape(sec1.get(j));
                 Point[] pts2 = normaliseShape(sec2.get(sec1.size() - j - 1));
                 double err = findError2(pts1, pts2);
-                System.out.println("err" + j + ":" + err);
+                System.out.println("        sec " + j + ": " + err);
 
                 double tlr;
                 if (j == 0 || j == sec1.size() - 1) {
@@ -624,7 +629,7 @@ public final class Checker {
     public static boolean testPosition(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         for (int i = 0; i < trustedCurves.length; i++) {
             double errPositionDtw = findError2(normalisePosition(trustedCurves[i].getPts()), normalisePosition(untrustedCurves[i].getPts()));
-            System.out.println("errPositionDtw: " + errPositionDtw);
+//            System.out.println("errPositionDtw: " + errPositionDtw);
 //            double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
 
             boolean correct = (errPositionDtw < 50)
@@ -693,6 +698,15 @@ public final class Checker {
         return export;
     }
 
+    private static String getColor(int idx) {
+        String[] colors = {
+                "Blue",
+                "Orange",
+                "Green"
+        };
+        return colors[idx];
+    }
+
     /**
      * check the correctness of user-plotted graphs against a pre-defined answer.
      *
@@ -722,6 +736,7 @@ public final class Checker {
         Curve[][] testClasses = classify(rawTestCurves);
 
         for (int j = 0; j < NUM_COLOR; j++) {
+
             /*
              Test: Number of curves
              Test: Number of intercepts
@@ -736,10 +751,15 @@ public final class Checker {
              Test: Labels
             */
 
-            System.out.println("class " + j + " start test");
-
+            String color = getColor(j);
             Curve[] targetCurves = targetClasses[j];
             Curve[] testCurves = testClasses[j];
+
+            if (targetCurves.length == 0 && testCurves.length == 0) {
+                continue;
+            }
+
+            System.out.println("class " + j + " start test");
 
             // make sure two graphs have same number of curves
             if (targetCurves.length != testCurves.length) {
@@ -753,7 +773,8 @@ public final class Checker {
                 boolean correct = (targetCurves[i].getInterX().length == testCurves[i].getInterX().length)
                         && (targetCurves[i].getInterY().length == testCurves[i].getInterY().length);
                 if (!correct) {
-                    jsonResult.put("errCause", "One of the curve contains wrong number of intercepts!");
+                    jsonResult.put("errCause", "Color " + color +
+                            ": One of the curve contains wrong number of intercepts!");
                     jsonResult.put("equal", false);
                     return jsonResult.toJSONString();
                 }
@@ -764,7 +785,8 @@ public final class Checker {
                 boolean correct = (targetCurves[i].getMaxima().length == testCurves[i].getMaxima().length)
                         && (targetCurves[i].getMinima().length == testCurves[i].getMinima().length);
                 if (!correct) {
-                    jsonResult.put("errCause", "One of the curve contains wrong number of turning points.");
+                    jsonResult.put("errCause", "Color " + color +
+                            ":One of the curve contains wrong number of turning points.");
                     jsonResult.put("equal", false);
                     return jsonResult.toJSONString();
                 }
@@ -772,26 +794,26 @@ public final class Checker {
 
             // Test the shape of the curve
             if (!testShape(targetCurves, testCurves)) {
-                jsonResult.put("errCause", "Your curve is the wrong shape!");
+                jsonResult.put("errCause", "Color " + color + ": Your curve is the wrong shape!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
 
             // Test the position of knots
             if (!testPosition(targetCurves, testCurves)) {
-                jsonResult.put("errCause", "Your curve is positioned incorrectly!");
+                jsonResult.put("errCause", "Color " + color + ": Your curve is positioned incorrectly!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
 
             // Check that the labels are correctly positioned
             if (!testSymbols(targetCurves, testCurves)) {
-                jsonResult.put("errCause", "Your labels are incorrectly placed!");
+                jsonResult.put("errCause", "Color " + color + ": Your labels are incorrectly placed!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
 
-            System.out.println("class " + j + " pass");
+            System.out.println();
         }
 
         // If we make it to here, we have an exact match with the correct answer.
