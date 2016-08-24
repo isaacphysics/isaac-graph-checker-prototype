@@ -149,6 +149,21 @@ public final class Parser {
                 }
                 curve.setPts(pts);
 
+                int colorIdx = ((Number) jsonCurve.get("colorIdx")).intValue();
+                curve.setColorIdx(colorIdx);
+
+                Double minX = ((Number) jsonCurve.get("minX")).doubleValue();
+                curve.setMinX(minX);
+
+                Double minY = ((Number) jsonCurve.get("minY")).doubleValue();
+                curve.setMinY(minY);
+
+                Double maxX = ((Number) jsonCurve.get("maxX")).doubleValue();
+                curve.setMaxX(maxX);
+
+                Double maxY = ((Number) jsonCurve.get("maxY")).doubleValue();
+                curve.setMaxY(maxY);
+
                 Knot[] interX = parseJSONKnots((JSONArray) jsonCurve.get("interX"));
                 curve.setInterX(interX);
 
@@ -168,8 +183,10 @@ public final class Parser {
             return data;
 
         } catch (NullPointerException npExn) {
+            npExn.printStackTrace();
             throw new CheckerException("Invalid JSON: key information missing");
         } catch (ClassCastException e) {
+            e.printStackTrace();
             throw new CheckerException("Invalid JSON: incorrect format");
         }
     }

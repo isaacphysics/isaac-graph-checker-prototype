@@ -24,13 +24,18 @@ package org.isaacphysics.labs.graph.checker;
  * maxima: maxima
  * minima: minima
  */
-public class Curve {
+public class Curve implements Comparable<Curve> {
 
     private Point[] pts;
     private Knot[] interX;
     private Knot[] interY;
     private Knot[] maxima;
     private Knot[] minima;
+    private int colorIdx;
+    private double minX;
+    private double maxX;
+    private double minY;
+    private double maxY;
 
     public Point[] getPts() {
         return pts;
@@ -70,5 +75,59 @@ public class Curve {
 
     public void setMinima(final Knot[] minima) {
         this.minima = minima;
+    }
+
+    public int getColorIdx() {
+        return colorIdx;
+    }
+
+    public double getMinX() {
+        return minX;
+    }
+
+    public double getMaxX() {
+        return maxX;
+    }
+
+    public double getMinY() {
+        return minY;
+    }
+
+    public double getMaxY() {
+        return maxY;
+    }
+
+    public void setColorIdx(int colorIdx) {
+        this.colorIdx = colorIdx;
+    }
+
+    public void setMinX(double minX) {
+        this.minX = minX;
+    }
+
+    public void setMaxX(double maxX) {
+        this.maxX = maxX;
+    }
+
+    public void setMinY(double minY) {
+        this.minY = minY;
+    }
+
+    public void setMaxY(double maxY) {
+        this.maxY = maxY;
+    }
+
+    @Override
+    public int compareTo(Curve o) {
+        double m1 = this.getMinX();
+        double m2 = o.getMinX();
+
+        if (m1 < m2) {
+            return -1;
+        } else if (m1 == m2) {
+            return 0;
+        } else {
+            return 1;
+        }
     }
 }

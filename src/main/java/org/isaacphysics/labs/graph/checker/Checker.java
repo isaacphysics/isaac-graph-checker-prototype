@@ -31,6 +31,7 @@ public final class Checker {
     static final double ERR_TOLERANCE_SHAPE = 0.01;
     static final double MAX_ERR_TOLERANCE = 0.15;
     static final double ORIGIN_RADIUS = 0.025;
+    static final int NUM_COLOR = 3;
 
     /**
      * Utility class should not have public or default constructor.
@@ -375,16 +376,16 @@ public final class Checker {
 
             // correct when
             // 1. two knots are in the same quadrant
-            // 2. two knots are near x axis, and they are at the same side of y axis
-            // 3. two knots are near y axis, and they are at the same side of x axis
+//             2. two knots are near x axis, and they are at the same side of y axis (removed)
+//             3. two knots are near y axis, and they are at the same side of x axis (removed)
             // 4. two knots are around the origin
             correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
 
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && knot1.x * knot2.x >= 0)
-
-                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
-                    && knot1.y * knot2.y >= 0)
+//                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+//                    && knot1.x * knot2.x >= 0)
+//
+//                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
+//                    && knot1.y * knot2.y >= 0)
 
                     || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
                     && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
@@ -401,11 +402,11 @@ public final class Checker {
             Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
             correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
 
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && knot1.x * knot2.x >= 0)
-
-                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
-                    && knot1.y * knot2.y >= 0)
+//                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+//                    && knot1.x * knot2.x >= 0)
+//
+//                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
+//                    && knot1.y * knot2.y >= 0)
 
                     || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
                     && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
@@ -608,9 +609,7 @@ public final class Checker {
                     return false;
                 }
             }
-
         }
-
         return true;
     }
 
@@ -663,12 +662,42 @@ public final class Checker {
         return true;
     }
 
+    private static Curve[][] classify(Curve[] curves) {
+        int n = NUM_COLOR;
+
+        ArrayList<ArrayList<Curve>> result = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            result.add(new ArrayList<>());
+        }
+
+        for (Curve c : curves) {
+            int idx = c.getColorIdx();
+            ArrayList<Curve> list = result.get(idx);
+            list.add(c);
+        }
+
+        for (ArrayList<Curve> list : result) {
+            Collections.sort(list);
+        }
+
+        Curve[][] export = new Curve[n][];
+        for (int i = 0; i < n; i++) {
+            ArrayList<Curve> tmp = result.get(i);
+            export[i] = new Curve[tmp.size()];
+
+            for (int j = 0; j < tmp.size(); j++) {
+                export[i][j] = tmp.get(j);
+            }
+        }
+
+        return export;
+    }
 
     /**
      * check the correctness of user-plotted graphs against a pre-defined answer.
      *
-     * @param trustedJSONString a JSON String which contains the correct answer
-     * @param untrustedJSONString a JSON String which contains user's answer
+     * @param targetJSONString a JSON String which contains the correct answer
+     * @param testJSONString a JSON String which contains user's answer
      * @return a JSON string containing two field. 1. the test result; 2. the error if there is one.
      *      test result can be true of false
      *      error includes: wrongNumOfCurves, wrongShape, wrongPosition, wrongLabels.
@@ -677,81 +706,92 @@ public final class Checker {
      * @throws ParseException it is thrown when input JSON string cannot be parsed. It is thrown by the external library
      *      json.simple.
      */
-    public static String test(final String trustedJSONString, final String untrustedJSONString)
+    public static String test(final String targetJSONString, final String testJSONString)
                                                     throws CheckerException, ParseException {
 
-        HashMap<String, Object> trustedData = Parser.parseInputJSONString(trustedJSONString);
-        Curve[] trustedCurves = (Curve[]) trustedData.get("curves");
+        HashMap<String, Object> trustedData = Parser.parseInputJSONString(targetJSONString);
+        Curve[] rawTargetCurves = (Curve[]) trustedData.get("curves");
 
-        HashMap<String, Object> untrustedData = Parser.parseInputJSONString(untrustedJSONString);
-        Curve[] untrustedCurves = (Curve[]) untrustedData.get("curves");
+        HashMap<String, Object> untrustedData = Parser.parseInputJSONString(testJSONString);
+        Curve[] rawTestCurves = (Curve[]) untrustedData.get("curves");
 
         JSONObject jsonResult = new JSONObject();
 
 
-        /*
-         Test: Number of curves
-         Test: Number of intercepts
-         Test: Number of turning Pts
-         Test: Shape of curve
-                - total error
-                - max error (NOT DONE)
-         Test: Position
-                - total error
-                - individual error (NOT DONE)
-                - test positions of intercepts and turning points
-         Test: Labels
-        */
+        Curve[][] targetClasses = classify(rawTargetCurves);
+        Curve[][] testClasses = classify(rawTestCurves);
 
+        for (int j = 0; j < NUM_COLOR; j++) {
+            /*
+             Test: Number of curves
+             Test: Number of intercepts
+             Test: Number of turning Pts
+             Test: Shape of curve
+                    - total error
+                    - max error (NOT DONE)
+             Test: Position
+                    - total error
+                    - individual error (NOT DONE)
+                    - test positions of intercepts and turning points
+             Test: Labels
+            */
 
-        // make sure two graphs have same number of curves
-        if (trustedCurves.length != untrustedCurves.length) {
-            jsonResult.put("errCause", "You've drawn the wrong number of curves!");
-            jsonResult.put("equal", false);
-            return jsonResult.toJSONString();
-        }
+            System.out.println("class " + j + " start test");
 
-        // make sure each curve has right number of x,y intercepts.
-        for (int i = 0; i < trustedCurves.length; i++) {
-            boolean correct = (trustedCurves[i].getInterX().length == untrustedCurves[i].getInterX().length)
-                    && (trustedCurves[i].getInterY().length == untrustedCurves[i].getInterY().length);
-            if (!correct) {
-                jsonResult.put("errCause", "One of the curve contains wrong number of intercepts!");
+            Curve[] targetCurves = targetClasses[j];
+            Curve[] testCurves = testClasses[j];
+
+            // make sure two graphs have same number of curves
+            if (targetCurves.length != testCurves.length) {
+                jsonResult.put("errCause", "You've drawn the wrong number of curves!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
-        }
 
-        // make sure each curve has right number of turning pts
-        for (int i = 0; i < trustedCurves.length; i++) {
-            boolean correct = (trustedCurves[i].getMaxima().length == untrustedCurves[i].getMaxima().length)
-                    && (trustedCurves[i].getMinima().length == untrustedCurves[i].getMinima().length);
-            if (!correct) {
-                jsonResult.put("errCause", "One of the curve contains wrong number of turning points.");
+            // make sure each curve has right number of x,y intercepts.
+            for (int i = 0; i < targetCurves.length; i++) {
+                boolean correct = (targetCurves[i].getInterX().length == testCurves[i].getInterX().length)
+                        && (targetCurves[i].getInterY().length == testCurves[i].getInterY().length);
+                if (!correct) {
+                    jsonResult.put("errCause", "One of the curve contains wrong number of intercepts!");
+                    jsonResult.put("equal", false);
+                    return jsonResult.toJSONString();
+                }
+            }
+
+            // make sure each curve has right number of turning pts
+            for (int i = 0; i < targetCurves.length; i++) {
+                boolean correct = (targetCurves[i].getMaxima().length == testCurves[i].getMaxima().length)
+                        && (targetCurves[i].getMinima().length == testCurves[i].getMinima().length);
+                if (!correct) {
+                    jsonResult.put("errCause", "One of the curve contains wrong number of turning points.");
+                    jsonResult.put("equal", false);
+                    return jsonResult.toJSONString();
+                }
+            }
+
+            // Test the shape of the curve
+            if (!testShape(targetCurves, testCurves)) {
+                jsonResult.put("errCause", "Your curve is the wrong shape!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
-        }
 
-        // Test the shape of the curve
-        if (!testShape(trustedCurves, untrustedCurves)) {
-            jsonResult.put("errCause", "Your curve is the wrong shape!");
-            jsonResult.put("equal", false);
-            return jsonResult.toJSONString();
-        }
+            // Test the position of knots
+            if (!testPosition(targetCurves, testCurves)) {
+                jsonResult.put("errCause", "Your curve is positioned incorrectly!");
+                jsonResult.put("equal", false);
+                return jsonResult.toJSONString();
+            }
 
-        // Test the position of knots
-        if (!testPosition(trustedCurves, untrustedCurves)) {
-            jsonResult.put("errCause", "Your curve is positioned incorrectly!");
-            jsonResult.put("equal", false);
-            return jsonResult.toJSONString();
-        }
+            // Check that the labels are correctly positioned
+            if (!testSymbols(targetCurves, testCurves)) {
+                jsonResult.put("errCause", "Your labels are incorrectly placed!");
+                jsonResult.put("equal", false);
+                return jsonResult.toJSONString();
+            }
 
-        // Check that the labels are correctly positioned
-        if (!testSymbols(trustedCurves, untrustedCurves)) {
-            jsonResult.put("errCause", "Your labels are incorrectly placed!");
-            jsonResult.put("equal", false);
-            return jsonResult.toJSONString();
+            System.out.println("class " + j + " pass");
         }
 
         // If we make it to here, we have an exact match with the correct answer.
@@ -763,8 +803,11 @@ public final class Checker {
 
     public static void main(final String[] args) throws CheckerException, ParseException, IOException {
 
-        String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
-        String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
+//        String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
+//        String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
+
+        String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/target.json");
+        String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/test.json");
         System.out.println(test(trustedJSONString, untrustedJSONString));
 
     }
