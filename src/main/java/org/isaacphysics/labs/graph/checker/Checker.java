@@ -541,7 +541,7 @@ public final class Checker {
      */
     private static boolean testShape(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         double strict = 0.1;
-        double loose = 0.3;
+        double loose = 0.4;
 
         for (int i = 0; i < trustedCurves.length; i++) {
 
