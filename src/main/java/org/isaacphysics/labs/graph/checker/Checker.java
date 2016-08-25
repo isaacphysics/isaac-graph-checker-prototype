@@ -1,4 +1,5 @@
 package org.isaacphysics.labs.graph.checker;
+
 /**
  * Copyright 2016 Junwei Yuan
  *
@@ -30,8 +31,8 @@ import org.json.simple.parser.ParseException;
  */
 public final class Checker {
 
-    static final double ORIGIN_RADIUS = 0.025;
-    static final int NUM_COLOR = 3;
+    static final private double ORIGIN_RADIUS = 0.025;
+    static final private int NUM_COLOR = 3;
 
     /**
      * Utility class should not have public or default constructor.
@@ -81,34 +82,6 @@ public final class Checker {
         }
 
         return normalised;
-
-//        int n = 100;
-//        Point[] reset = new Point[n+1];
-//        reset[0] = normalised[0];
-//        int i = 1, j = 1;
-//
-//        while (i <= n && j <= n) {
-//            double u = i * 0.01;
-//
-//            while (j <= n && normalised[j].x < u) {
-//                j++;
-//            }
-//
-//            if (normalised[j].x == u) {
-//                reset[i] = normalised[j];
-//                i++;
-//                j++;
-//                continue;
-//            }
-//
-//            double grad = (normalised[j].y - normalised[j-1].y) / (normalised[j].x - normalised[j-1].x);
-//            double y = normalised[j-1].y + grad * (u - normalised[j-1].x);
-//            reset[i] = new Point(u, y);
-//            i++;
-//        }
-//
-//
-//        return reset;
     }
 
     /**
@@ -375,52 +348,44 @@ public final class Checker {
      * @return true if they match, false otherwise
      */
     private static boolean testKnotsPosition(final Knot[] trustedKnots, final Knot[] untrustedKnots) {
-//        if (trustedKnots.length != untrustedKnots.length) {
-//            return false;
-//        }
-
         boolean correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
+        for (int i = 0; i < trustedKnots.length; i++) {
             Knot knot1 = trustedKnots[i];
             Knot knot2 = untrustedKnots[i];
 
-            // correct when
-            // 1. two knots are in the same quadrant
-//             2. two knots are near x axis, and they are at the same side of y axis (removed)
-//             3. two knots are near y axis, and they are at the same side of x axis (removed)
-            // 4. two knots are around the origin
-            correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
+            correct = (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS)
 
-//                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-//                    && knot1.x * knot2.x >= 0)
-//
-//                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
-//                    && knot1.y * knot2.y >= 0)
+                    || ((knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
+                    && (Math.abs(knot1.x) - ORIGIN_RADIUS) * (Math.abs(knot2.x) - ORIGIN_RADIUS) >= 0
+                    && (Math.abs(knot1.y) - ORIGIN_RADIUS) * (Math.abs(knot2.y) - ORIGIN_RADIUS) >= 0);
 
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
+            if (!correct) {
+                break;
+            }
         }
 
         if (correct) {
             return true;
         }
 
-        // if incorrect, do the same test with reversed untrustedKnots
-        correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
+        // if incorrect, do the same test with reversed untrustedKnot;
+        for (int i = 0; i < trustedKnots.length; i++) {
             Knot knot1 = trustedKnots[i];
             Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
-            correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
 
-//                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-//                    && knot1.x * knot2.x >= 0)
-//
-//                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
-//                    && knot1.y * knot2.y >= 0)
+            correct = (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS)
 
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
+                    || ((knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
+                    && (Math.abs(knot1.x) - ORIGIN_RADIUS) * (Math.abs(knot2.x) - ORIGIN_RADIUS) >= 0
+                    && (Math.abs(knot1.y) - ORIGIN_RADIUS) * (Math.abs(knot2.y) - ORIGIN_RADIUS) >= 0);
+
+            if (!correct) {
+                break;
+            }
         }
+
         return correct;
     }
 
@@ -436,12 +401,8 @@ public final class Checker {
      * @return true if they match, false otherwise
      */
     private static boolean testKnotsSymbols(final Knot[] trustedKnots, final Knot[] untrustedKnots) {
-//        if (trustedKnots.length != untrustedKnots.length) {
-//            return false;
-//        }
-
         boolean correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
+        for (int i = 0; i < trustedKnots.length; i++) {
             Knot knot1 = trustedKnots[i];
             Knot knot2 = untrustedKnots[i];
 
@@ -458,6 +419,10 @@ public final class Checker {
 
                     && ((knot1.ySymbol == null && knot2.ySymbol == null)
                     || (knot1.ySymbol != null && knot2.ySymbol != null && knot1.ySymbol.text.equals(knot2.ySymbol.text)));
+
+            if (!correct) {
+                break;
+            }
         }
 
         if (correct) {
@@ -466,7 +431,7 @@ public final class Checker {
 
         // if incorrect, do the same test with reversed trustedKnots
         correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
+        for (int i = 0; i < trustedKnots.length; i++) {
             Knot knot1 = trustedKnots[i];
             Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
 
@@ -478,6 +443,10 @@ public final class Checker {
 
                     && ((knot1.ySymbol == null && knot2.ySymbol == null)
                     || (knot1.ySymbol != null && knot2.ySymbol != null && knot1.ySymbol.text.equals(knot2.ySymbol.text)));
+
+            if (!correct) {
+                break;
+            }
         }
 
         return correct;
@@ -640,7 +609,7 @@ public final class Checker {
      * @return true if two curves are at similar position relative to origin, false otherwise
      * @throws CheckerException thrown when two curves have different number of points
      */
-    public static boolean testPosition(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
+    private static boolean testPosition(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         for (int i = 0; i < trustedCurves.length; i++) {
             double errPositionDtw = findDtwError(normalisePosition(trustedCurves[i].getPts()), normalisePosition(untrustedCurves[i].getPts()));
 //            System.out.println("errPositionDtw: " + errPositionDtw);
@@ -745,7 +714,8 @@ public final class Checker {
      * @throws ParseException it is thrown when input JSON string cannot be parsed. It is thrown by the external library
      *      json.simple.
      */
-    public static String test(final String targetJSONString, final String testJSONString)
+
+    static String test(final String targetJSONString, final String testJSONString)
                                                     throws CheckerException, ParseException {
         // parse JSON string
         HashMap<String, Object> trustedData = Parser.parseInputJSONString(targetJSONString);
@@ -789,7 +759,7 @@ public final class Checker {
 
             // make sure two graphs have same number of curves
             if (targetCurves.length != testCurves.length) {
-                jsonResult.put("errCause", "You've drawn the wrong number of curves!");
+                jsonResult.put("errCause", "Color " + color + ": You've drawn the wrong number of curves!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
@@ -818,21 +788,21 @@ public final class Checker {
 
             // Test the shape of the curve
             if (!testShape(targetCurves, testCurves)) {
-                jsonResult.put("errCause", "Color " + color + ": Your curve is the wrong shape!");
+                jsonResult.put("errCause", "Color " + color + ": curve is the wrong shape!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
 
             // Test the position of knots
             if (!testPosition(targetCurves, testCurves)) {
-                jsonResult.put("errCause", "Color " + color + ": Your curve is positioned incorrectly!");
+                jsonResult.put("errCause", "Color " + color + ": curve is positioned incorrectly!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
 
             // Check that the labels are correctly positioned
             if (!testSymbols(targetCurves, testCurves)) {
-                jsonResult.put("errCause", "Color " + color + ": Your labels are incorrectly placed!");
+                jsonResult.put("errCause", "Color " + color + ": labels are incorrectly placed!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
