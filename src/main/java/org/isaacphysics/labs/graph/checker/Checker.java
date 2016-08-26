@@ -31,7 +31,7 @@ import org.json.simple.parser.ParseException;
  */
 public final class Checker {
 
-    static final private double ORIGIN_RADIUS = 0.025;
+    static final private double ORIGIN_RADIUS = 0.010;
     static final private int NUM_COLOR = 3;
 
     /**
@@ -541,7 +541,7 @@ public final class Checker {
      */
     private static boolean testShape(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         double strict = 0.1;
-        double loose = 0.4;
+        double loose = 0.5;
 
         for (int i = 0; i < trustedCurves.length; i++) {
 
@@ -735,6 +735,7 @@ public final class Checker {
 
             /*
              Test: Number of curves
+             Test: Size of curves
              Test: Number of intercepts
              Test: Number of turning Pts
              Test: Shape of curve
@@ -762,6 +763,18 @@ public final class Checker {
                 jsonResult.put("errCause", "Color " + color + ": You've drawn the wrong number of curves!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
+            }
+
+            // make sure the curve from user is large enough.
+            for (int i = 0; i < testCurves.length; i++) {
+                Curve c = testCurves[i];
+                double rx = c.getMaxX() - c.getMinX();
+                double ry = c.getMaxY() - c.getMinY();
+                if (rx < 0.2 && ry < 0.2) {
+                    jsonResult.put("errCause", "Color " + color + ": One of the curve is too small!");
+                    jsonResult.put("equal", false);
+                    return jsonResult.toJSONString();
+                }
             }
 
             // make sure each curve has right number of x,y intercepts.
