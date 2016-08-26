@@ -123,100 +123,6 @@ public final class Checker {
         return normalised;
     }
 
-//    /**
-//     * estimate the difference (error) between two curves.
-//     *
-//     * @param pts1 points of one of the curve
-//     * @param pts2 points of the other curve
-//     * @return the estimated error
-//     * @throws CheckerException thrown if the two curves have different number of points
-//     */
-//    private static double findError(final Point[] pts1, final Point[] pts2) throws CheckerException {
-//        if (pts1.length != pts2.length) {
-//            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
-//        }
-//
-//        int n = pts1.length;
-//
-//        double err1 = 0;
-//        for (int i = 0; i < n; i++) {
-//            err1 += Math.pow(Point.getDist(pts1[i], pts2[i]), 1.0);
-//        }
-//
-//        return err1 / n;
-//
-//        err1 = Math.pow(err1, 1.0 / 2.0) / n;
-//
-//        double err2 = 0;
-//        double max_error = 0;
-//        for (int i = 0; i < n; i++) {
-//            err2 += Math.pow(Point.getDist(pts1[(n - 1) - i], pts2[i]), 2.0);
-//            max_error = Math.max(Point.getDist(pts1[(n - 1) - i], pts2[i]), max_error);
-//        }
-//        err2 = Math.pow(err2, 1.0 / 2.0) / n;
-//
-//        return Math.min(err1, err2);
-//    }
-
-//    /**
-//     * estimate the maximum (error) between two curves.
-//     *
-//     * @param pts1 points of one of the curve
-//     * @param pts2 points of the other curve
-//     * @return the maximumestimated error
-//     * @throws CheckerException thrown if the two curves have different number of points
-//     */
-//    private static double findMaxError(final Point[] pts1, final Point[] pts2) throws CheckerException {
-//        if (pts1.length != pts2.length) {
-//            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
-//        }
-//        int n = pts1.length;
-//        double max_error = 0;
-//        for (int i = 0; i < n; i++) {
-//            max_error = Math.max(Point.getDist(pts1[i], pts2[i]), max_error);
-//        }
-//        return max_error;
-//    }
-
-
-//    private static double[] findGradient(final Point[] pts) {
-//        double[] grad = new double[pts.length - 1];
-//        for (int i = 0; i < grad.length; i++) {
-//            double dx = pts[i+1].x - pts[i].x;
-//            double dy = pts[i+1].y - pts[i].y;
-//            if (dy / dx > 10) {
-//                grad[i] = 10;
-//            } else if (dy / dx < -10) {
-//                grad[i] = -10;
-//            } else {
-//                grad[i] = dy / dx;
-//            }
-//            grad[i] = dy/dx;
-//        }
-//        return grad;
-//    }
-
-
-//    private static double findGradError(final double[] trusted, final double[] untrusted) {
-//        int n = trusted.length;
-//
-//        double err1 = 0;
-//        for (int i = 0; i < n; i++) {
-//            err1 += Math.pow(Math.abs(trusted[i] - untrusted[i]), 2.0);
-//        }
-//
-//        return err1 / n;
-//
-//        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
-//
-//        double err2 = 0;
-//        for (int i = 0; i < n; i++) {
-//            err2 += Math.pow(Math.abs(trusted[n - i - 1] - untrusted[i]), NORM_DEGREE);
-//        }
-//        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
-//
-//        return Math.min(err1, err2);
-//    }
 
     /**
      * Calculate the error between two curves' points using "dynamic time wrapping". The algorithm is on wikipedia.
@@ -268,74 +174,6 @@ public final class Checker {
 
         return Math.min(err1, err2);
     }
-
-//    private static double findGradError2(final double[] trusted, final double[] untrusted) {
-//
-//        int n = trusted.length;
-//        int m = untrusted.length;
-//
-//        double[][] dtw = new double[n+1][m+1];
-//        for (int i = 1; i <= n; i++) {
-//            dtw[i][0] = 10000;
-//        }
-//        for (int j = 1; j <= m; j++) {
-//            dtw[0][j] = 10000;
-//        }
-//        dtw[0][0] = 0;
-//
-//        for (int i = 1; i <= n; i++) {
-//            for (int j = 1; j <= m; j++) {
-//                double cost = Math.pow(Math.abs(trusted[i-1] - untrusted[j-1]), NORM_DEGREE);
-//                dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
-//            }
-//        }
-//        double err1 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
-//
-//        for (int i = 1; i <= n; i++) {
-//            dtw[i][0] = 10000;
-//        }
-//        for (int j = 1; j <= m; j++) {
-//            dtw[0][j] = 10000;
-//        }
-//        dtw[0][0] = 0;
-//
-//        for (int i = 1; i <= n; i++) {
-//            for (int j = 1; j <= m; j++) {
-//                double cost = Math.pow(Math.abs(trusted[i-1] - untrusted[m-j]), NORM_DEGREE);
-//                dtw[i][j] = cost + Math.min(Math.min(dtw[i-1][j], dtw[i][j-1]), dtw[i-1][j-1]);
-//            }
-//        }
-//        double err2 = Math.pow(dtw[n][m], 1.0 / NORM_DEGREE) / n;
-//
-//        return Math.min(err1, err2);
-//    }
-
-    //    private static int findNumInflextions(Point[] pts) {
-//        Point[] grad = new Point[pts.length - 1];
-//        for (int i = 0; i < grad.length; i++) {
-//            double dx = pts[i+1].x - pts[i].x;
-//            double dy = pts[i+1].y - pts[i].y;
-//            grad[i] = new Point(pts[i].x, dy/dx);
-//        }
-//
-//        Point[] diff = new Point[grad.length - 1];
-//        for (int i = 0; i < diff.length; i++) {
-//            double dx = grad[i+1].x - grad[i].x;
-//            double dy = grad[i+1].y - grad[i].y;
-//            diff[i] = new Point(grad[i].x, dy/dx);
-//        }
-//
-//        int count = 0;
-//        for (int i = 1; i < diff.length; i++) {
-//            if (diff[i-1].y * diff[i].y < 0) {
-//                System.out.println(diff[i].x);
-//                count++;
-//            }
-//        }
-//
-//        System.out.println();
-//        return count;
-//    }
 
     /**
      * test the position of a set of special points (called knots) of user's curve
@@ -485,51 +323,6 @@ public final class Checker {
         return sections;
     }
 
-//    private static LinkedList<Point[]> splitCurve(Curve curve) {
-//        Point[] pts = curve.getPts();
-//
-//        double[] grad = new double[pts.length - 1];
-//        for (int i = 0; i < grad.length; i++) {
-//            grad[i] = (pts[i+1].y - pts[i].y) / (pts[i+1].x - pts[i].x);
-//        }
-//
-//        int prev = 0;
-//        LinkedList<Point[]> sections = new LinkedList<>();
-//        for (int i = 1; i < grad.length; i++) {
-//            if (grad[i-1] * grad[i] < 0 || grad[i] == 0) {
-//                if ((pts[i].x - pts[i-1].x) * (pts[i+1].x - pts[i].x) >= 0) {
-//                    double range = 0.05;
-//                    double limit = 0.05;
-//
-//                    int l = i - 1;
-//                    while (l >= 0 && Point.getDist(pts[l], pts[i]) < range && Math.abs(grad[l]) < limit) {
-//                        l--;
-//                    }
-//                    if (l < 0 || Point.getDist(pts[l], pts[i]) >= range) {
-//                        continue;
-//                    }
-//
-//                    int r = i;
-//                    while (r < grad.length && Point.getDist(pts[i], pts[r + 1]) < range && Math.abs(grad[r]) < limit) {
-//                        r++;
-//                    }
-//                    if (r >= grad.length || Point.getDist(pts[i], pts[r + 1]) >= range) {
-//                        continue;
-//                    }
-//
-//                    Point[] tmp = Arrays.copyOfRange(pts, prev, i);
-//                    sections.add(tmp);
-//                    prev = i;
-//                }
-//            }
-//        }
-//
-//        Point[] tmp = Arrays.copyOfRange(pts, prev, pts.length);
-//        sections.add(tmp);
-//
-//        return sections;
-//    }
-
 
     /**
      * Test the shape of user's curve against the corresponding curve in the answer.
@@ -612,8 +405,6 @@ public final class Checker {
     private static boolean testPosition(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
         for (int i = 0; i < trustedCurves.length; i++) {
             double errPositionDtw = findDtwError(normalisePosition(trustedCurves[i].getPts()), normalisePosition(untrustedCurves[i].getPts()));
-//            System.out.println("errPositionDtw: " + errPositionDtw);
-//            double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
 
             boolean correct = (errPositionDtw < 50)
                     && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
@@ -831,9 +622,6 @@ public final class Checker {
 
 
     public static void main(final String[] args) throws CheckerException, ParseException, IOException {
-
-//        String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/test.json");
-//        String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Desktop/nodejs/public/json/drawn.json");
 
         String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/target.json");
         String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/test.json");
