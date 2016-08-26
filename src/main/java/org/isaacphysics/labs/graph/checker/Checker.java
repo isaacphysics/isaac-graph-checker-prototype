@@ -1,4 +1,5 @@
 package org.isaacphysics.labs.graph.checker;
+
 /**
  * Copyright 2016 Junwei Yuan
  *
@@ -16,8 +17,11 @@ package org.isaacphysics.labs.graph.checker;
  */
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
-
+import java.util.LinkedList;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
@@ -27,12 +31,8 @@ import org.json.simple.parser.ParseException;
  */
 public final class Checker {
 
-    static final double NORM_DEGREE = 3;
-    static final double ERR_TOLERANCE_POSITION = 0.02;
-    static final double ERR_TOLERANCE_SHAPE = 0.01;
-    static final double ERR_TOLERANCE_GRAD = 0.1;
-    static final double ORIGIN_RADIUS = 0.025;
-    static final double MAXIMUM_ERROR_TOLERANCE = 2.45;
+    static final private double ORIGIN_RADIUS = 0.010;
+    static final private int NUM_COLOR = 3;
 
     /**
      * Utility class should not have public or default constructor.
@@ -123,115 +123,110 @@ public final class Checker {
         return normalised;
     }
 
+
     /**
-     * estimate the difference (error) between two curves.
+     * Calculate the error between two curves' points using "dynamic time wrapping". The algorithm is on wikipedia.
      *
-     * @param pts1 points of one of the curve
-     * @param pts2 points of the other curve
-     * @return the estimated error
-     * @throws CheckerException thrown if the two curves have different number of points
+     * Note the cost is square of distance between two matching points. This is inspired by method in
+     * "least error optimisation".
+     *
+     * @param trusted points of curve of answer
+     * @param untrusted points of curve of user
+     * @return the measured error.
      */
-    private static double findError(final Point[] pts1, final Point[] pts2) throws CheckerException {
-        if (pts1.length != pts2.length) {
-            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
-        }
-
-        int n = pts1.length;
-
-        double err1 = 0;
-        for (int i = 0; i < n; i++) {
-            err1 += Math.pow(Point.getDist(pts1[i], pts2[i]), NORM_DEGREE);
-        }
-        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
-
-        double err2 = 0;
-        double max_error = 0;
-        for (int i = 0; i < n; i++) {
-            err2 += Math.pow(Point.getDist(pts1[(n - 1) - i], pts2[i]), NORM_DEGREE);
-            max_error = Math.max(Point.getDist(pts1[(n - 1) - i], pts2[i]), max_error);
-        }
-        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
-
-        return Math.min(err1, err2);
-    }
-
-    private static double[] findGradient(final Point[] pts) {
-        double[] grad = new double[pts.length - 1];
-        for (int i = 0; i < grad.length; i++) {
-            double dx = pts[i+1].x - pts[i].x;
-            double dy = pts[i+1].y - pts[i].y;
-            grad[i] = dy / dx;
-        }
-        return grad;
-    }
-
-    private static double findGradError(final double[] trusted, final double[] untrusted) {
+    private static double findDtwError(final Point[] trusted, final Point[] untrusted) {
         int n = trusted.length;
+        int m = untrusted.length;
 
-        double err1 = 0;
-        for (int i = 0; i < n; i++) {
-            err1 += Math.pow(Math.abs(trusted[i] - untrusted[i]), NORM_DEGREE);
+        double[][] dtw = new double[n + 1][m + 1];
+        for (int i = 1; i <= n; i++) {
+            dtw[i][0] = 10000;
         }
-        err1 = Math.pow(err1, 1.0 / NORM_DEGREE) / n;
+        for (int j = 1; j <= m; j++) {
+            dtw[0][j] = 10000;
+        }
+        dtw[0][0] = 0;
 
-        double err2 = 0;
-        for (int i = 0; i < n; i++) {
-            err2 += Math.pow(Math.abs(trusted[n - i - 1] - untrusted[i]), NORM_DEGREE);
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                double cost = Math.pow(Point.getDist(trusted[i - 1], untrusted[j - 1]), 2.0);
+                dtw[i][j] = cost + Math.min(Math.min(dtw[i - 1][j], dtw[i][j - 1]), dtw[i - 1][j - 1]);
+            }
         }
-        err2 = Math.pow(err2, 1.0 / NORM_DEGREE) / n;
+
+        double err1 = dtw[n][m];
+
+        for (int i = 1; i <= n; i++) {
+            dtw[i][0] = 10000;
+        }
+        for (int j = 1; j <= m; j++) {
+            dtw[0][j] = 10000;
+        }
+        dtw[0][0] = 0;
+
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                double cost = Math.pow(Point.getDist(trusted[i - 1], untrusted[m - j]), 2.0);
+                dtw[i][j] = cost + Math.min(Math.min(dtw[i - 1][j], dtw[i][j - 1]), dtw[i - 1][j - 1]);
+            }
+        }
+        double err2 = dtw[n][m];
 
         return Math.min(err1, err2);
     }
 
     /**
-     * estimate the maximum (error) between two curves.
+     * test the position of a set of special points (called knots) of user's curve
+     * against the corresponding curve in the answer
      *
-     * @param pts1 points of one of the curve
-     * @param pts2 points of the other curve
-     * @return the maximumestimated error
-     * @throws CheckerException thrown if the two curves have different number of points
+     * for example like maximum, minimum, and x,y intercepts.
+     *
+     * @param trustedKnots the special points of the curve in answer
+     * @param untrustedKnots the special points of the user's curve
+     * @return true if they match, false otherwise
      */
-    private static double findMaxError(final Point[] pts1, final Point[] pts2) throws CheckerException {
-        if (pts1.length != pts2.length) {
-            throw new CheckerException("Trusted curve and untrusted curve have different number of points");
+    private static boolean testKnotsPosition(final Knot[] trustedKnots, final Knot[] untrustedKnots) {
+        boolean correct = true;
+        for (int i = 0; i < trustedKnots.length; i++) {
+            Knot knot1 = trustedKnots[i];
+            Knot knot2 = untrustedKnots[i];
+
+            correct = (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS)
+
+                    || ((knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
+                    && (Math.abs(knot1.x) - ORIGIN_RADIUS) * (Math.abs(knot2.x) - ORIGIN_RADIUS) >= 0
+                    && (Math.abs(knot1.y) - ORIGIN_RADIUS) * (Math.abs(knot2.y) - ORIGIN_RADIUS) >= 0);
+
+            if (!correct) {
+                break;
+            }
         }
-        int n = pts1.length;
-        double max_error = 0;
-        for (int i = 0; i < n; i++) {
-            max_error = Math.max(Point.getDist(pts1[(n - 1) - i], pts2[i]), max_error);
+
+        if (correct) {
+            return true;
         }
-        System.out.println(max_error);
-        return max_error;
+
+        // if incorrect, do the same test with reversed untrustedKnot;
+        for (int i = 0; i < trustedKnots.length; i++) {
+            Knot knot1 = trustedKnots[i];
+            Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
+
+            correct = (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
+                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS)
+
+                    || ((knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
+                    && (Math.abs(knot1.x) - ORIGIN_RADIUS) * (Math.abs(knot2.x) - ORIGIN_RADIUS) >= 0
+                    && (Math.abs(knot1.y) - ORIGIN_RADIUS) * (Math.abs(knot2.y) - ORIGIN_RADIUS) >= 0);
+
+            if (!correct) {
+                break;
+            }
+        }
+
+        return correct;
     }
 
-    /**
-     * Test the position of user's curve against the corresponding curve in the answer.
-     *
-     * @param trustedPts points of curve in the answer
-     * @param untrustedPts points of corresponding curve of user
-     * @return true if two curves are at similar position relative to origin, false otherwise
-     * @throws CheckerException thrown when two curves have different number of points
-     */
-    public static boolean testPosition(final Point[] trustedPts, final Point[] untrustedPts) throws CheckerException {
-        double errPosition = findError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
-        double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
-        return (errPosition < ERR_TOLERANCE_POSITION && maxErrPosition < MAXIMUM_ERROR_TOLERANCE);
-    }
-
-    /**
-     * Test the shape of user's curve against the corresponding curve in the answer.
-     *
-     * @param trustedPts points of curve in the answer
-     * @param untrustedPts points of corresponding curve of user
-     * @return true if two curves are at similar shape, false otherwise
-     * @throws CheckerException thrown when two curves have different number of points
-     */
-    public static boolean testShape(final Point[] trustedPts, final Point[] untrustedPts) throws CheckerException {
-        double errShape = findError(normaliseShape(trustedPts), normaliseShape(untrustedPts));
-        double errGrad = findGradError(findGradient(trustedPts), findGradient(untrustedPts));
-        double maxErrPosition = findMaxError(normalisePosition(trustedPts), normalisePosition(untrustedPts));
-        return (errShape < ERR_TOLERANCE_SHAPE && maxErrPosition < MAXIMUM_ERROR_TOLERANCE && errGrad < ERR_TOLERANCE_GRAD);
-    }
 
     /**
      * test the labels of a set of special points (called knots) of user's curve
@@ -244,12 +239,8 @@ public final class Checker {
      * @return true if they match, false otherwise
      */
     private static boolean testKnotsSymbols(final Knot[] trustedKnots, final Knot[] untrustedKnots) {
-        if (trustedKnots.length != untrustedKnots.length) {
-            return false;
-        }
-
         boolean correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
+        for (int i = 0; i < trustedKnots.length; i++) {
             Knot knot1 = trustedKnots[i];
             Knot knot2 = untrustedKnots[i];
 
@@ -266,6 +257,10 @@ public final class Checker {
 
                     && ((knot1.ySymbol == null && knot2.ySymbol == null)
                     || (knot1.ySymbol != null && knot2.ySymbol != null && knot1.ySymbol.text.equals(knot2.ySymbol.text)));
+
+            if (!correct) {
+                break;
+            }
         }
 
         if (correct) {
@@ -274,7 +269,7 @@ public final class Checker {
 
         // if incorrect, do the same test with reversed trustedKnots
         correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
+        for (int i = 0; i < trustedKnots.length; i++) {
             Knot knot1 = trustedKnots[i];
             Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
 
@@ -286,77 +281,222 @@ public final class Checker {
 
                     && ((knot1.ySymbol == null && knot2.ySymbol == null)
                     || (knot1.ySymbol != null && knot2.ySymbol != null && knot1.ySymbol.text.equals(knot2.ySymbol.text)));
+
+            if (!correct) {
+                break;
+            }
         }
 
         return correct;
     }
 
+    /**
+     * split a curve into an array of sections. The split points are turning points.
+     * @param curve the input curve
+     * @return an array of sections
+     */
+    private static LinkedList<Point[]> splitCurve(final Curve curve) {
+        LinkedList<Knot> knots = new LinkedList<>();
+        knots.addAll(Arrays.asList(curve.getMaxima()));
+        knots.addAll(Arrays.asList(curve.getMinima()));
+
+        int prev = 0;
+        Point[] pts = curve.getPts();
+        LinkedList<Point[]> sections = new LinkedList<>();
+        for (int i = 0; i < pts.length; i++) {
+            for (int j = 0; j < knots.size(); j++) {
+                if (pts[i].x == knots.get(j).x && pts[i].y == knots.get(j).y) {
+                    knots.remove(j);
+                    Point[] tmp = Arrays.copyOfRange(pts, prev, i);
+                    sections.push(tmp);
+                    prev = i;
+                }
+            }
+
+            if (knots.size() == 0) {
+                break;
+            }
+        }
+
+        Point[] tmp = Arrays.copyOfRange(pts, prev, pts.length);
+        sections.push(tmp);
+        return sections;
+    }
+
 
     /**
-     * test the position of a set of special points (called knots) of user's curve
-     * against the corresponding curve in the answer
-     *
-     * for example like maximum, minimum, and x,y intercepts.
-     *
-     * @param trustedKnots the special points of the curve in answer
-     * @param untrustedKnots the special points of the user's curve
-     * @return true if they match, false otherwise
+     * Test the shape of user's curve against the corresponding curve in the answer.
+     * @param trustedCurves curves in the answer
+     * @param untrustedCurves corresponding curves of user
+     * @return true if two curves are at similar shape, false otherwise
+     * @throws CheckerException thrown when one curve is split into wrong number of sections. (this should not happen,
+     * if happens, then it is a problem of the splitting algorithm.)
      */
-    private static boolean testKnotsPosition(final Knot[] trustedKnots, final Knot[] untrustedKnots) {
-        if (trustedKnots.length != untrustedKnots.length) {
-            return false;
+    private static boolean testShape(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
+        double strict = 0.1;
+        double loose = 0.5;
+
+        for (int i = 0; i < trustedCurves.length; i++) {
+
+            System.out.println("    Curve " + i);
+
+            LinkedList<Point[]> sec1 = splitCurve(trustedCurves[i]);
+            LinkedList<Point[]> sec2 = splitCurve(untrustedCurves[i]);
+
+            if (sec1.size() != sec2.size()) {
+                throw new CheckerException("wrong number of sections.");
+            }
+
+            boolean equal = true;
+            for (int j = 0; j < sec1.size(); j++) {
+                Point[] pts1 = normaliseShape(sec1.get(j));
+                Point[] pts2 = normaliseShape(sec2.get(j));
+                double err = findDtwError(pts1, pts2);
+                System.out.println("        sec " + j + ": " + err);
+
+                double tlr;
+                if (j == 0 || j == sec1.size() - 1) {
+                    tlr = loose;
+                } else {
+                    tlr = strict;
+                }
+
+                if (err > tlr) {
+                    equal = false;
+                    break;
+                }
+            }
+
+            if (equal) {
+                continue;
+            }
+
+            System.out.println("        reverse");
+
+            for (int j = 0; j < sec1.size(); j++) {
+                Point[] pts1 = normaliseShape(sec1.get(j));
+                Point[] pts2 = normaliseShape(sec2.get(sec1.size() - j - 1));
+                double err = findDtwError(pts1, pts2);
+                System.out.println("        sec " + j + ": " + err);
+
+                double tlr;
+                if (j == 0 || j == sec1.size() - 1) {
+                    tlr = loose;
+                } else {
+                    tlr = strict;
+                }
+
+                if (err > tlr) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Test the position of user's curve against the corresponding curve in the answer.
+     *
+     * @param trustedCurves curves in the answer
+     * @param untrustedCurves corresponding curves of user
+     * @return true if two curves are at similar position relative to origin, false otherwise
+     * @throws CheckerException thrown when two curves have different number of points
+     */
+    private static boolean testPosition(final Curve[] trustedCurves, final Curve[] untrustedCurves) throws CheckerException {
+        for (int i = 0; i < trustedCurves.length; i++) {
+            double errPositionDtw = findDtwError(normalisePosition(trustedCurves[i].getPts()), normalisePosition(untrustedCurves[i].getPts()));
+
+            boolean correct = (errPositionDtw < 50)
+                    && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
+                    && testKnotsPosition(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
+                    && testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
+                    && testKnotsPosition(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
+
+            if (!correct) {
+                return false;
+            }
         }
 
-        boolean correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
-            Knot knot1 = trustedKnots[i];
-            Knot knot2 = untrustedKnots[i];
+        return true;
+    }
 
-            // correct when
-            // 1. two knots are in the same quadrant
-            // 2. two knots are near x axis, and they are at the same side of y axis
-            // 3. two knots are near y axis, and they are at the same side of x axis
-            // 4. two knots are around the origin
-            correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
 
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && knot1.x * knot2.x >= 0)
-
-                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
-                    && knot1.y * knot2.y >= 0)
-
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
+    /**
+     * Test the position of labels.
+     * @param trustedCurves curves in the answer
+     * @param untrustedCurves corresponding curves from user
+     * @return true if the labels are correctly placed in user's curves
+     */
+    private static boolean testSymbols(final Curve[] trustedCurves, final Curve[] untrustedCurves) {
+        for (int i = 0; i < trustedCurves.length; i++) {
+            boolean correct = testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
+                    && testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
+                    && testKnotsSymbols(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
+                    && testKnotsSymbols(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
+            if (!correct) {
+                return false;
+            }
         }
 
-        if (correct) {
-            return true;
+        return true;
+    }
+
+
+    /**
+     * separate curves according to their colors.
+     * @param curves the input curves
+     * @return an array of array of curves, each array of curve corresponds to curves drawn in one color.
+     */
+    private static Curve[][] classify(final Curve[] curves) {
+        int n = NUM_COLOR;
+
+        ArrayList<ArrayList<Curve>> result = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            result.add(new ArrayList<>());
         }
 
-        // if incorrect, do the same test with reversed untrustedKnots
-        correct = true;
-        for (int i = 0; i < trustedKnots.length && correct; i++) {
-            Knot knot1 = trustedKnots[i];
-            Knot knot2 = untrustedKnots[trustedKnots.length - i - 1];
-            correct = (knot1.x * knot2.x >= 0 && knot1.y * knot2.y >= 0)
-
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && knot1.x * knot2.x >= 0)
-
-                    || (Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS
-                    && knot1.y * knot2.y >= 0)
-
-                    || (Math.abs(knot1.y) < ORIGIN_RADIUS && Math.abs(knot2.y) < ORIGIN_RADIUS
-                    && Math.abs(knot1.x) < ORIGIN_RADIUS && Math.abs(knot2.x) < ORIGIN_RADIUS);
+        for (Curve c : curves) {
+            int idx = c.getColorIdx();
+            ArrayList<Curve> list = result.get(idx);
+            list.add(c);
         }
-        return correct;
+
+        for (ArrayList<Curve> list : result) {
+            Collections.sort(list);
+        }
+
+        Curve[][] export = new Curve[n][];
+        for (int i = 0; i < n; i++) {
+            ArrayList<Curve> tmp = result.get(i);
+            export[i] = new Curve[tmp.size()];
+
+            for (int j = 0; j < tmp.size(); j++) {
+                export[i][j] = tmp.get(j);
+            }
+        }
+
+        return export;
+    }
+
+    /**
+     * return a string (name of color) corresponding to a color index.
+     * @param idx color index of curve
+     * @return a string that includes color name
+     */
+    private static String getColor(final int idx) {
+        String[] colors = {
+            "Blue",
+            "Orange",
+            "Green"
+        };
+        return colors[idx];
     }
 
     /**
      * check the correctness of user-plotted graphs against a pre-defined answer.
      *
-     * @param trustedJSONString a JSON String which contains the correct answer
-     * @param untrustedJSONString a JSON String which contains user's answer
+     * @param targetJSONString a JSON String which contains the correct answer
+     * @param testJSONString a JSON String which contains user's answer
      * @return a JSON string containing two field. 1. the test result; 2. the error if there is one.
      *      test result can be true of false
      *      error includes: wrongNumOfCurves, wrongShape, wrongPosition, wrongLabels.
@@ -365,86 +505,128 @@ public final class Checker {
      * @throws ParseException it is thrown when input JSON string cannot be parsed. It is thrown by the external library
      *      json.simple.
      */
-    public static String test(final String trustedJSONString, final String untrustedJSONString)
+
+    static String test(final String targetJSONString, final String testJSONString)
                                                     throws CheckerException, ParseException {
+        // parse JSON string
+        HashMap<String, Object> trustedData = Parser.parseInputJSONString(targetJSONString);
+        Curve[] rawTargetCurves = (Curve[]) trustedData.get("curves");
 
-        HashMap<String, Object> trustedData = Parser.parseInputJSONString(trustedJSONString);
-        Curve[] trustedCurves = (Curve[]) trustedData.get("curves");
+        HashMap<String, Object> untrustedData = Parser.parseInputJSONString(testJSONString);
+        Curve[] rawTestCurves = (Curve[]) untrustedData.get("curves");
 
-        HashMap<String, Object> untrustedData = Parser.parseInputJSONString(untrustedJSONString);
-        Curve[] untrustedCurves = (Curve[]) untrustedData.get("curves");
+        // separate curves according to their colors
+        Curve[][] targetClasses = classify(rawTargetCurves);
+        Curve[][] testClasses = classify(rawTestCurves);
 
+        // start testing
         JSONObject jsonResult = new JSONObject();
-        /*
-         Test: Number of curves
-         Test: Number of intercepts
-         Test: Shape of curve
-                - total error
-                - max error
-                - number of turning points
-         Test: Position
-                - total error
-                - individual error
-                - test positions of intercepts
-         Test: Labels
-        */
 
-        System.out.println("__________________________________________________");
-        System.out.println("Checking number of curves...");
-        if (trustedCurves.length != untrustedCurves.length) {
-            jsonResult.put("errCause", "You've drawn the wrong number of curves!");
-            jsonResult.put("equal", false);
-            return jsonResult.toJSONString();
-        }
+        for (int j = 0; j < NUM_COLOR; j++) {
 
-        // Test the shape of the curve
-        System.out.println("__________________________________________________");
-        System.out.println("Checking shape of the curve...");
-        for (int i = 0; i < trustedCurves.length; i++) {
-            if (!testShape(trustedCurves[i].getPts(), untrustedCurves[i].getPts())) {
-                jsonResult.put("errCause", "Your curve is the wrong shape!");
+            /*
+             Test: Number of curves
+             Test: Size of curves
+             Test: Number of intercepts
+             Test: Number of turning Pts
+             Test: Shape of curve
+                    - total error
+                    - max error (NOT DONE)
+             Test: Position
+                    - total error
+                    - individual error (NOT DONE)
+                    - test positions of intercepts and turning points
+             Test: Labels
+            */
+
+            String color = getColor(j);
+            Curve[] targetCurves = targetClasses[j];
+            Curve[] testCurves = testClasses[j];
+
+            if (targetCurves.length == 0 && testCurves.length == 0) {
+                continue;
+            }
+
+            System.out.println("class " + j + " start test");
+
+            // make sure two graphs have same number of curves
+            if (targetCurves.length != testCurves.length) {
+                jsonResult.put("errCause", "Color " + color + ": You've drawn the wrong number of curves!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
-        }
 
-        // Test the position of knots
-        System.out.println("__________________________________________________");
-        System.out.println("Checking position of the curve...");
-        for (int i = 0; i < trustedCurves.length; i++) {
-            boolean correct = testPosition(trustedCurves[i].getPts(), untrustedCurves[i].getPts())
-                    && testKnotsPosition(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
-                    && testKnotsPosition(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
-                    && testKnotsPosition(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
-                    && testKnotsPosition(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
-            if (!correct) {
-                jsonResult.put("errCause", "Your curve is positioned incorrectly!");
+            // make sure the curve from user is large enough.
+            for (int i = 0; i < testCurves.length; i++) {
+                Curve c = testCurves[i];
+                double rx = c.getMaxX() - c.getMinX();
+                double ry = c.getMaxY() - c.getMinY();
+                if (rx < 0.2 && ry < 0.2) {
+                    jsonResult.put("errCause", "Color " + color + ": One of the curve is too small!");
+                    jsonResult.put("equal", false);
+                    return jsonResult.toJSONString();
+                }
+            }
+
+            // make sure each curve has right number of x,y intercepts.
+            for (int i = 0; i < targetCurves.length; i++) {
+                boolean correct = (targetCurves[i].getInterX().length == testCurves[i].getInterX().length)
+                        && (targetCurves[i].getInterY().length == testCurves[i].getInterY().length);
+                if (!correct) {
+                    jsonResult.put("errCause", "Color " + color + ": One of the curve contains wrong number of intercepts!");
+                    jsonResult.put("equal", false);
+                    return jsonResult.toJSONString();
+                }
+            }
+
+            // make sure each curve has right number of turning pts
+            for (int i = 0; i < targetCurves.length; i++) {
+                boolean correct = (targetCurves[i].getMaxima().length == testCurves[i].getMaxima().length)
+                        && (targetCurves[i].getMinima().length == testCurves[i].getMinima().length);
+                if (!correct) {
+                    jsonResult.put("errCause", "Color " + color + ":One of the curve contains wrong number of turning points.");
+                    jsonResult.put("equal", false);
+                    return jsonResult.toJSONString();
+                }
+            }
+
+            // Test the shape of the curve
+            if (!testShape(targetCurves, testCurves)) {
+                jsonResult.put("errCause", "Color " + color + ": curve is the wrong shape!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
-        }
 
-        // Check that the labels are correctly positioned
-        System.out.println("__________________________________________________");
-        System.out.println("Checking position of labels...");
-        for (int i = 0; i < trustedCurves.length; i++) {
-            boolean correct = testKnotsSymbols(trustedCurves[i].getInterX(), untrustedCurves[i].getInterX())
-                    && testKnotsSymbols(trustedCurves[i].getInterY(), untrustedCurves[i].getInterY())
-                    && testKnotsSymbols(trustedCurves[i].getMaxima(), untrustedCurves[i].getMaxima())
-                    && testKnotsSymbols(trustedCurves[i].getMinima(), untrustedCurves[i].getMinima());
-            if (!correct) {
-                jsonResult.put("errCause", "Your labels are incorrectly placed!");
+            // Test the position of knots
+            if (!testPosition(targetCurves, testCurves)) {
+                jsonResult.put("errCause", "Color " + color + ": curve is positioned incorrectly!");
                 jsonResult.put("equal", false);
                 return jsonResult.toJSONString();
             }
+
+            // Check that the labels are correctly positioned
+            if (!testSymbols(targetCurves, testCurves)) {
+                jsonResult.put("errCause", "Color " + color + ": labels are incorrectly placed!");
+                jsonResult.put("equal", false);
+                return jsonResult.toJSONString();
+            }
+
+            System.out.println();
         }
 
         // If we make it to here, we have an exact match with the correct answer.
-        System.out.println("__________________________________________________");
         jsonResult.put("errCause", "null");
         jsonResult.put("equal", true);
         return jsonResult.toJSONString();
     }
 
+
+    public static void main(final String[] args) throws CheckerException, ParseException, IOException {
+
+        String trustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/target.json");
+        String untrustedJSONString = WholeFileReader.readFile("/Users/YUAN/Documents/workspace/isaac-graph-checker/src/main/json/test.json");
+        System.out.println(test(trustedJSONString, untrustedJSONString));
+
+    }
 
 }
